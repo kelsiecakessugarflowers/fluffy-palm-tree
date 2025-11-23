@@ -1,3 +1,16 @@
-/* Keep editor preview tidy */
-.kelsie-faq-list__question { font-size: 1rem; }
-.kelsie-faq-list__answer p { margin: 0 0 .75rem; }
+.kelsie-review-block .wp-block-pullquote {
+  max-width: 70rem;
+  margin: 4rem auto;
+  padding: 3rem clamp(1.75rem, 4vw, 3rem);
+  background-color: #FFF9FC;
+  border-top: 2px solid #E5B9D2;
+  border-bottom: 2px solid #E5B9D2;
+  text-align: left;
+}
+.kelsie-review-block .wp-block-pullquote cite {
+  display: block;
+  margin-top: 1.75rem;
+  font-family: "Raleway", sans-serif;
+  font-size: 1rem;
+  color: #6B7B65;
+}
