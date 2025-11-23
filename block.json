@@ -1,29 +1,22 @@
 {
   "apiVersion": 2,
-  "name": "kelsiecakes/faq-list",
-  "title": "FAQ List (ACF Repeater)",
+  "name": "kelsiecakes/review-list",
+  "title": "Review List",
   "category": "widgets",
-  "icon": "list-view",
-  "description": "Outputs your FAQ ACF Repeater rows as an accessible accordion with FAQPage JSON-LD.",
-  "keywords": ["faq", "accordion", "questions", "answers"],
+  "icon": "format-quote",
+  "keywords": ["review", "testimonial", "schema"],
+  "acf": {
+    "mode": "php",
+    "renderTemplate": "render.php"
+  },
+  "style": "kelsie-review-block",
+  "editorStyle": "kelsie-review-block-editor",
   "supports": {
     "anchor": true,
     "align": ["wide", "full"],
     "spacing": {
       "margin": true,
       "padding": true
-    }
-  },
-  "viewScript": "file:./frontend.js",
-  "style": "kelsie-faq-block",
-  "editorStyle": "kelsie-faq-block-editor",
-  "acf": {
-    "mode": "preview",
-    "renderTemplate": "render.php"
-  },
-  "example": {
-    "attributes": {
-      "preview": true
     }
   }
 }
