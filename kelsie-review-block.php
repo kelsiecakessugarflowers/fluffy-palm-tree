@@ -1,141 +1,75 @@
 <?php
 /**
- * Plugin Name: Kelsie ACF FAQ Block
- * Description: ACF block for FAQ repeater with optional Rank Math schema to be used on different pages with different categories.
- * Version:     1.0.3
- * Author:      Kelsie Cakes
+ * Plugin Name: Kelsie Review Block
+ * Description: A custom testimonial block using ACF + Rank Math schema.
+ * Version: 1.0
+ * Author: Your Name
  */
 
 if (!defined('ABSPATH')) exit;
 
-/** ---------------------------
- *  CONFIG (edit in one place)
- * --------------------------- */
-define('KELSIE_BLOCK_DIR', __DIR__ . '/blocks/kelsie-faq');
-define('KELSIE_BLOCK_NAME', 'kelsiecakes/faq-list');    // block.json "name"
+// Register block + scripts
+add_action('init', function() {
+  // Register styles
+  wp_register_style('kelsie-review-block', plugin_dir_url(__FILE__) . 'style.css');
+  wp_register_style('kelsie-review-block-editor', plugin_dir_url(__FILE__) . 'editor.css');
 
-define('KELSIE_FAQ_REPEATER', 'faq_acf_repeater');      // repeater
-define('KELSIE_FAQ_QUESTION', 'faq_question');          // sub field (Text)
-define('KELSIE_FAQ_ANSWER',   'faq_answer');            // sub field (WYSIWYG)
-define('KELSIE_FAQ_CATEGORY', 'faq_category');          // sub field (Checkbox)
-
-define('KELSIE_OPTIONS_ID',   'option');                // ACF Options Page id
-define('KELSIE_SCHEMA_KEY',   'kelsie_faq');            // array key in Rank Math graph
-
-add_action('admin_init', function () {
-    if (!class_exists('ACF') && current_user_can('activate_plugins')) {
-        add_action('admin_notices', function () {
-            echo '<div class="notice notice-error"><p><strong>Kelsie ACF FAQ Block:</strong> ACF is inactive. The block will show a placeholder until ACF is active.</p></div>';
-        });
+  // Register block
+  register_block_type(__DIR__, [
+    'style' => 'kelsie-review-block',
+    'editor_style' => 'kelsie-review-block-editor',
+    'render_callback' => function($attributes, $content) {
+      ob_start();
+      include plugin_dir_path(__FILE__) . 'render.php';
+      return ob_get_clean();
     }
+  ]);
 });
 
-add_action('init', function () {
-    // Styles referenced by block.json
-    $style_path        = plugin_dir_path(__FILE__) . 'assets/style.css';
-    $editor_style_path = plugin_dir_path(__FILE__) . 'assets/editor.css';
+// Inject schema via Rank Math
+add_filter('rank_math/json_ld', function($data, $jsonld) {
+  if (!function_exists('have_rows') || !have_rows('client_testimonials')) {
+    return $data;
+  }
 
-    wp_register_style(
-        'kelsie-faq-block',
-        plugins_url('assets/style.css', __FILE__),
-        [],
-        file_exists($style_path) ? filemtime($style_path) : null
-    );
+  $reviews = [];
 
-    wp_register_style(
-        'kelsie-faq-block-editor',
-        plugins_url('assets/editor.css', __FILE__),
-        [],
-        file_exists($editor_style_path) ? filemtime($editor_style_path) : null
-    );
+  while (have_rows('client_testimonials')) {
+    the_row();
 
-    // Safe even if ACF is off; render.php guards itself.
-    register_block_type(
-    KELSIE_BLOCK_DIR,
-    [
-        'render_callback' => 'kelsie_render_faq_block',
-    ]
-);
-});
+    $name = get_sub_field('reviewer_name');
+    $text = get_sub_field('review_body');
+    $rating = get_sub_field('rating_number');
+    $review_id = get_sub_field('review_id') ?: 'review-' . sanitize_title($name);
+    $sameAs = get_sub_field('review_original_location');
 
-// Optional: create an ACF Options Page if none exists (harmless if you already have one)
-add_action('acf/init', function () {
-    if (function_exists('acf_add_options_page')) {
-        if (!acf_get_options_pages()) {
-            acf_add_options_page([
-                'page_title' => 'ACF FAQ Repeater Group',
-                'menu_title' => 'ACF FAQ Repeater Group',
-                'menu_slug'  => 'acf-faq-repeater-group',
-                'capability' => 'manage_options',
-                'redirect'   => false,
-                'position'   => 59,
-            ]);
-        }
+    $review = [
+      '@type' => 'Review',
+      '@id' => get_permalink() . '#' . $review_id,
+      'reviewBody' => $text,
+      'reviewRating' => [
+        '@type' => 'Rating',
+        'ratingValue' => (string) $rating,
+        'bestRating' => '5'
+      ],
+      'author' => [
+        '@type' => 'Person',
+        'name' => $name
+      ]
+    ];
+
+    if ($sameAs) {
+      $review['sameAs'] = esc_url($sameAs);
     }
-});
 
-add_action( 'init', function () {
-    register_taxonomy(
-        'faq_category',
-        [], // no attached post type
-        [
-            'label'        => 'FAQ Categories',
-            'public'       => false,
-            'show_ui'      => true,
-            'hierarchical' => true,
-            'show_in_rest' => true,
-        ]
-    );
-});
+    $reviews[] = $review;
+  }
 
+  $data[] = [
+    '@context' => 'https://schema.org',
+    '@type' => 'ItemList',
+    'itemListElement' => $reviews
+  ];
 
-/** ---------------------------
- *  Rank Math integration (optional)
- * --------------------------- */
-add_action('plugins_loaded', function () {
-    if (!defined('RANK_MATH_VERSION')) return;
-
-    add_filter('rank_math/json_ld', function ($data, $jsonld) {
-        if (!is_singular()) return $data;
-
-        global $post;
-        if (!$post || !function_exists('has_block') || !has_block(KELSIE_BLOCK_NAME, $post)) {
-            return $data;
-        }
-        if (!function_exists('have_rows')) return $data; // ACF off
-
-        // Prefer per-post rows; fall back to Options Page.
-        $source = null;
-        if (have_rows(KELSIE_FAQ_REPEATER, $post->ID)) {
-            $source = [KELSIE_FAQ_REPEATER, $post->ID];
-        } elseif (have_rows(KELSIE_FAQ_REPEATER, KELSIE_OPTIONS_ID)) {
-            $source = [KELSIE_FAQ_REPEATER, KELSIE_OPTIONS_ID];
-        } else {
-            return $data;
-        }
-
-        $faq = ['@type' => 'FAQPage', 'mainEntity' => []];
-
-        while (have_rows($source[0], $source[1])) {
-            the_row();
-            $q = trim(wp_strip_all_tags(get_sub_field(KELSIE_FAQ_QUESTION)));
-            $a = trim(wp_strip_all_tags(wpautop(get_sub_field(KELSIE_FAQ_ANSWER))));
-            if ($q && $a) {
-                $faq['mainEntity'][] = [
-                    '@type' => 'Question',
-                    'name'  => $q,
-                    'acceptedAnswer' => [
-                        '@type' => 'Answer',
-                        'text'  => $a,
-                    ],
-                ];
-            }
-        }
-
-        if (!empty($faq['mainEntity'])) {
-            $data[KELSIE_SCHEMA_KEY] = $faq; // append, don’t overwrite
-        }
-
-        return $data;
-    }, 20, 2);
-});
+  return $data;
+}, 10, 2);
