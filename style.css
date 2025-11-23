@@ -14,3 +14,81 @@
   font-size: 1rem;
   color: #6B7B65;
 }
+.se-wpt blockquote {
+    background: transparent !important;
+    margin: 0 !important;
+    max-width: none !important;
+    padding: 0 !important;
+}
+
+.se-wpt .wp-block-pullquote {
+    box-sizing: border-box;
+    max-width: 70rem;      
+    margin: 4rem auto;     
+    padding: 3rem clamp(1.75rem, 4vw, 3rem);
+    background-color: #FFF9FC;  
+    border-top: 2px solid #E5B9D2;   
+    border-bottom: 2px solid #E5B9D2;
+    text-align: left;                   
+}
+
+
+.se-wpt .wp-block-pullquote blockquote,
+.se-wpt .wp-block-pullquote p,
+.se-wpt .wp-block-pullquote cite {
+    margin: 0;
+    color: inherit;
+}
+
+.se-wpt .wp-block-pullquote p {
+    font-family: "Source Serif Pro", Georgia, serif;
+    font-size: 1.35rem;
+    line-height: 1.7;
+    color: #492C38;                     
+    max-width: 60rem;                   
+}
+
+
+.se-wpt .wp-block-pullquote blockquote::before {
+    content: "“";
+    display: block;
+    font-family: "Source Serif Pro", Georgia, serif;
+    font-size: 3.6rem;
+    line-height: 1;
+    margin-bottom: 1rem;
+    color: #A9A4E1;                       
+}
+
+.se-wpt .wp-block-pullquote cite {
+    display: block;
+    margin-top: 1.75rem;
+    font-family: "Raleway", sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    color: #6B7B65;
+}
+
+.se-wpt .wp-block-pullquote.is-style-solid-color {
+    background-color: #E5B9D2;
+    border: none;
+    color: #492C38;
+}
+
+.se-wpt .wp-block-pullquote.is-style-solid-color blockquote::before {
+    color: #492C38;
+}
+
+/* Mobile tweaks */
+@media (max-width: 768px) {
+    .se-wpt .wp-block-pullquote {
+        margin: 3rem 1rem;
+        padding: 2.25rem 1.5rem;
+    }
+
+    .se-wpt .wp-block-pullquote p {
+        font-size: 1.15rem;
+        line-height: 1.65;
+        max-width: 100%;
+    }
+}
+
