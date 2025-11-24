@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Kelsie Review Block
  * Description: Custom testimonial block with ACF repeater + Rank Math schema.
- * Version: 2.2
+ * Version: 2.3
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
