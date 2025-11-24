@@ -14,3 +14,11 @@
   font-size: 1rem;
   color: #6B7B65;
 }
+.kelsie-review-block__notice {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #fff4f8;
+  border-left: 4px solid #e5b9d2;
+  color: #492c38;
+  font-family: "Raleway", sans-serif;
+ }
