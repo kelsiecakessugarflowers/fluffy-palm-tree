@@ -82,18 +82,18 @@ final class KelsieReviewBlock {
 		return is_admin() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || wp_doing_ajax();
 	}
 
-	private function should_handle_request() {
-		if ( $this->should_load_in_admin() ) {
-			return true;
-		}
+        private function should_handle_request() {
+                if ( $this->should_load_in_admin() ) {
+                        return true;
+                }
 
-		$allowed = $this->get_allowed_pages();
-		if ( empty( $allowed ) ) {
-			return false;
-		}
+                $allowed = $this->get_allowed_pages();
+                if ( empty( $allowed ) ) {
+                        return true;
+                }
 
-		return is_page( $allowed );
-	}
+                return is_page( $allowed );
+        }
 
 	public function maybe_register_frontend_block() {
 		if ( ! $this->should_handle_request() ) {
