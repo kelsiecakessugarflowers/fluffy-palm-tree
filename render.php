@@ -24,7 +24,7 @@ if ( '' === $section_id ) {
 $section_id = 'kelsie-review-list';
 }
 
-// If ACF is not available, show a gentle notice on the frontend only.
+// If ACF is not available, show notice on the frontend only.
 if ( ! $acf_available ) {
 if ( is_admin() ) {
 return;
