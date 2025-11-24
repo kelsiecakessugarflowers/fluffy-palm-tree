@@ -13,6 +13,19 @@ A lightweight testimonials plugin that provides the **Review List** block with A
 
 The plugin also loads front-end and editor styles for the block and injects an ItemList schema via Rank Math based on the testimonials entered into the block.
 
+## ACF Required Field Structure
+
+Repeater: client_testimonials
+ * Fields inside repeater:
+- reviewer_name (Text - required)
+- review_body (Textarea - required)
+- review_title (Text)
+- rating_number (Number, min 0 max 5, step 1)
+- review_id (Text)
+- review_original_location (URL)
+
+Location: Block equals kelsiecakes/review-list
+
 ## Front-end availability
 Front-end registration of the block is gated by the `kelsie_review_block_allowed_pages` filter. If no allowed pages are provided, the block will not register on the front end, and nothing will render for site visitors.
 
