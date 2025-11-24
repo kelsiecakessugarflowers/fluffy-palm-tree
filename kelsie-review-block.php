@@ -144,11 +144,11 @@ final class KelsieReviewBlock {
                 );
         }
 
-	public function render_block( $attributes, $content ) {
-		ob_start();
-		include plugin_dir_path(__FILE__) . 'render.php';
-		return ob_get_clean();
-	}
+        public function render_block( $attributes, $content, $block = [] ) {
+                ob_start();
+                include plugin_dir_path(__FILE__) . 'render.php';
+                return ob_get_clean();
+        }
 
 
 	/* -----------------------------------------------------------
