@@ -54,20 +54,52 @@ $render_placeholder = static function( $message ) use ( $section_id ) {
     <?php
 };
 
-// Try using true ACF repeater rows first.
-$has_acf_rows = $acf_available && have_rows( 'client_testimonials' );
-
-// If ACF isn’t available or has zero rows, attempt fallback to $block['data'].
+// Collect repeater rows from available sources.
 $normalized_rows = [];
 
-if ( ! $has_acf_rows && isset( $block['data'] ) && is_array( $block['data'] ) ) {
+if ( $acf_available && function_exists( 'get_field' ) ) {
+    $acf_rows = get_field( 'client_testimonials' );
+
+    if ( method_exists( 'KelsieReviewBlock', 'normalize_repeater_rows' ) ) {
+        $normalized_rows = KelsieReviewBlock::normalize_repeater_rows(
+            [ 'client_testimonials' => $acf_rows ]
+        );
+    }
+}
+
+if ( empty( $normalized_rows ) && $acf_available && have_rows( 'client_testimonials' ) ) {
+    // Fallback to the_row() cursor if direct field access fails.
+    $normalized_rows = [];
+
+    while ( have_rows( 'client_testimonials' ) ) {
+        the_row();
+
+        $normalized_rows[] = [
+            'review_body'              => (string) get_sub_field( 'review_body' ),
+            'reviewer_name'            => (string) get_sub_field( 'reviewer_name' ),
+            'review_title'             => (string) get_sub_field( 'review_title' ),
+            'rating_number'            => get_sub_field( 'rating_number' ),
+            'review_id'                => (string) get_sub_field( 'review_id' ),
+            'review_original_location' => (string) get_sub_field( 'review_original_location' ),
+        ];
+    }
+
+    // Normalize values (trim, validate, etc.).
+    if ( method_exists( 'KelsieReviewBlock', 'normalize_repeater_rows' ) ) {
+        $normalized_rows = KelsieReviewBlock::normalize_repeater_rows(
+            [ 'client_testimonials' => $normalized_rows ]
+        );
+    }
+}
+
+if ( empty( $normalized_rows ) && isset( $block['data'] ) && is_array( $block['data'] ) ) {
     if ( method_exists( 'KelsieReviewBlock', 'normalize_repeater_rows' ) ) {
         $normalized_rows = KelsieReviewBlock::normalize_repeater_rows( $block['data'] );
     }
 }
 
 // If absolutely no rows exist, show placeholder in editor; silence on frontend.
-if ( ! $has_acf_rows && empty( $normalized_rows ) ) {
+if ( empty( $normalized_rows ) ) {
     if ( $is_editor ) {
         $render_placeholder( __( 'Add client testimonials to show this block.', 'kelsie-review-block' ) );
     }
@@ -81,128 +113,63 @@ if ( ! $has_acf_rows && empty( $normalized_rows ) ) {
 
     <div class="kelsie-review-block__list" role="list">
 
-        <?php if ( $has_acf_rows ) : ?>
+        <?php foreach ( $normalized_rows as $index => $row ) : ?>
+            <?php
+            $body   = trim( (string) ( $row['review_body'] ?? '' ) );
+            $title  = trim( (string) ( $row['review_title'] ?? '' ) );
+            $name   = trim( (string) ( $row['reviewer_name'] ?? '' ) );
+            $rating = $row['rating_number'] ?? null;
 
-            <?php while ( have_rows( 'client_testimonials' ) ) : the_row(); ?>
-                <?php
-                $body   = trim( (string) get_sub_field( 'review_body' ) );
-                $title  = trim( (string) get_sub_field( 'review_title' ) );
-                $name   = trim( (string) get_sub_field( 'reviewer_name' ) );
-                $rating = get_sub_field( 'rating_number' );
+            if ( '' === $body || '' === $name ) {
+                continue;
+            }
 
-                if ( '' === $body || '' === $name ) {
-                    continue;
-                }
+            $rating_value = ( is_numeric( $rating ) && $rating > 0 )
+                ? max( 1, min( 5, (float) $rating ) )
+                : null;
 
-                $rating_value = ( is_numeric( $rating ) && $rating > 0 )
-                    ? max( 1, min( 5, (float) $rating ) )
-                    : null;
+            $review_id   = trim( (string) ( $row['review_id'] ?? '' ) );
+            $row_index   = $index + 1;
 
-                $review_id  = trim( (string) get_sub_field( 'review_id' ) );
-                $row_index  = get_row_index();
+            $review_slug = $review_id !== ''
+                ? $review_id
+                : sanitize_title( $name . '-' . $row_index );
 
-                $review_slug = $review_id !== ''
-                    ? $review_id
-                    : sanitize_title( $name . '-' . $row_index );
+            if ( '' === $review_slug ) {
+                $review_slug = uniqid( 'review-', false );
+            }
+            ?>
 
-                if ( '' === $review_slug ) {
-                    $review_slug = uniqid( 'review-', false );
-                }
-                ?>
+            <article class="kelsie-review-block__item"
+                id="<?php echo esc_attr( $review_slug ); ?>"
+                role="listitem">
 
-                <article class="kelsie-review-block__item"
-                    id="<?php echo esc_attr( $review_slug ); ?>"
-                    role="listitem">
+                <blockquote class="wp-block-pullquote is-style-solid-color">
 
-                    <blockquote class="wp-block-pullquote is-style-solid-color">
+                    <?php if ( $title !== '' ) : ?>
+                        <p class="review-title"><strong><?php echo esc_html( $title ); ?></strong></p>
+                    <?php endif; ?>
 
-                        <?php if ( $title !== '' ) : ?>
-                            <p class="review-title"><strong><?php echo esc_html( $title ); ?></strong></p>
-                        <?php endif; ?>
+                    <p><?php echo esc_html( $body ); ?></p>
 
-                        <p><?php echo esc_html( $body ); ?></p>
+                    <cite>
+                        <span class="kelsie-review-block__name">
+                            <?php echo esc_html( $name ); ?>
+                        </span>
 
-                        <cite>
-                            <span class="kelsie-review-block__name">
-                                <?php echo esc_html( $name ); ?>
+                        <?php if ( $rating_value !== null ) : ?>
+                            <span class="kelsie-review-block__rating"
+                                aria-label="<?php echo esc_attr( sprintf( __( 'Rated %.1f out of 5', 'kelsie-review-block' ), $rating_value ) ); ?>">
+                                – <?php echo esc_html( number_format_i18n( $rating_value, 1 ) ); ?>/5
                             </span>
-
-                            <?php if ( $rating_value !== null ) : ?>
-                                <span class="kelsie-review-block__rating"
-                                    aria-label="<?php echo esc_attr( sprintf( __( 'Rated %.1f out of 5', 'kelsie-review-block' ), $rating_value ) ); ?>">
-                                    – <?php echo esc_html( number_format_i18n( $rating_value, 1 ) ); ?>/5
-                                </span>
-                            <?php endif; ?>
-                        </cite>
-
-                    </blockquote>
-
-                </article>
-
-            <?php endwhile; ?>
-
-
-        <?php else : ?>
-
-            <?php foreach ( $normalized_rows as $index => $row ) : ?>
-                <?php
-                $body   = trim( (string) ( $row['review_body'] ?? '' ) );
-                $title  = trim( (string) ( $row['review_title'] ?? '' ) );
-                $name   = trim( (string) ( $row['reviewer_name'] ?? '' ) );
-                $rating = $row['rating_number'] ?? null;
-
-                if ( '' === $body || '' === $name ) {
-                    continue;
-                }
-
-                $rating_value = ( is_numeric( $rating ) && $rating > 0 )
-                    ? max( 1, min( 5, (float) $rating ) )
-                    : null;
-
-                $review_id   = trim( (string) ( $row['review_id'] ?? '' ) );
-                $row_index   = $index + 1;
-
-                $review_slug = $review_id !== ''
-                    ? $review_id
-                    : sanitize_title( $name . '-' . $row_index );
-
-                if ( '' === $review_slug ) {
-                    $review_slug = uniqid( 'review-', false );
-                }
-                ?>
-
-                <article class="kelsie-review-block__item"
-                    id="<?php echo esc_attr( $review_slug ); ?>"
-                    role="listitem">
-
-                    <blockquote class="wp-block-pullquote is-style-solid-color">
-
-                        <?php if ( $title !== '' ) : ?>
-                            <p class="review-title"><strong><?php echo esc_html( $title ); ?></strong></p>
                         <?php endif; ?>
+                    </cite>
 
-                        <p><?php echo esc_html( $body ); ?></p>
+                </blockquote>
 
-                        <cite>
-                            <span class="kelsie-review-block__name">
-                                <?php echo esc_html( $name ); ?>
-                            </span>
+            </article>
 
-                            <?php if ( $rating_value !== null ) : ?>
-                                <span class="kelsie-review-block__rating"
-                                    aria-label="<?php echo esc_attr( sprintf( __( 'Rated %.1f out of 5', 'kelsie-review-block' ), $rating_value ) ); ?>">
-                                    – <?php echo esc_html( number_format_i18n( $rating_value, 1 ) ); ?>/5
-                                </span>
-                            <?php endif; ?>
-                        </cite>
-
-                    </blockquote>
-
-                </article>
-
-            <?php endforeach; ?>
-
-        <?php endif; ?>
+        <?php endforeach; ?>
 
     </div>
 

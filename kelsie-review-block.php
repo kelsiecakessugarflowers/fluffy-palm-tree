@@ -3,12 +3,12 @@
  * Plugin Name: Kelsie Review Block
  * Description: Custom testimonial block using ACF repeater fields + automatic Review Schema via Rank Math.
  * Author: It Me
- * Version: 3.1.0
+ * Version: 3.1.1
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'KELSIE_REVIEW_BLOCK_VERSION', '3.1.0' );
+define( 'KELSIE_REVIEW_BLOCK_VERSION', '3.1.1' );
 
 /* -----------------------------------------------------------
  *  BRAND DESIGN CONSTANTS
@@ -403,17 +403,45 @@ CSS;
 
     public static function normalize_repeater_rows( $data ) {
 
+        if ( ! is_array( $data ) ) {
+            return [];
+        }
+
         // For ACF blocks, repeater maps directly under this key:
-        if ( isset( $data['client_testimonials'] ) &&
-             is_array( $data['client_testimonials'] ) ) {
+        if ( isset( $data['client_testimonials'] ) && is_array( $data['client_testimonials'] ) ) {
             $rows = $data['client_testimonials'];
         } else {
+            // Some payloads flatten repeater rows into index_field keys (e.g., client_testimonials_0_reviewer_name).
             $rows = [];
+
+            foreach ( $data as $key => $value ) {
+                if ( ! is_string( $key ) ) {
+                    continue;
+                }
+
+                if ( ! preg_match( '/^client_testimonials_(\d+)_(.+)$/', $key, $matches ) ) {
+                    continue;
+                }
+
+                $index          = absint( $matches[1] );
+                $field          = sanitize_key( $matches[2] );
+                $rows[ $index ] = $rows[ $index ] ?? [];
+                $rows[ $index ][ $field ] = $value;
+            }
+
+            if ( ! empty( $rows ) ) {
+                ksort( $rows );
+                $rows = array_values( $rows );
+            }
         }
 
         $normalized = [];
 
         foreach ( $rows as $r ) {
+
+            if ( ! is_array( $r ) ) {
+                continue;
+            }
 
             $body = trim( $r['review_body'] ?? '' );
             $name = trim( $r['reviewer_name'] ?? '' );
