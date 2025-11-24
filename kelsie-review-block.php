@@ -2,10 +2,13 @@
 /**
  * Plugin Name: Kelsie Review Block
  * Description: Custom testimonial block with ACF repeater + Rank Math schema.
- * Version: 2.5
- */
+ * Author: It Me
+ * Version: 2.4.1
+*/
 
 if ( ! defined( 'ABSPATH' ) ) exit;
+
+define( 'KELSIE_REVIEW_BLOCK_VERSION', '2.4.1' );
 
 	/* -----------------------------------------------------------
 	 *  BRAND DESIGN CONSTANTS
@@ -254,6 +257,10 @@ final class KelsieReviewBlock {
          * ----------------------------------------------------------- */
 
         public function inject_schema( $data, $jsonld ) {
+
+                if ( is_admin() ) {
+                        return $data;
+                }
 
                 if ( ! $this->should_handle_request() ) {
                         return $data;
