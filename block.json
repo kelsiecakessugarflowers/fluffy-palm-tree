@@ -1,16 +1,11 @@
 {
   "apiVersion": 2,
   "name": "kelsiecakes/review-list",
-  "title": "Review List",
+  "title": "Review List (ACF Repeater)",
   "category": "widgets",
   "icon": "format-quote",
-  "keywords": ["review", "testimonial", "schema"],
-  "acf": {
-    "mode": "php",
-    "renderTemplate": "render.php"
-  },
-  "style": "kelsie-review-block",
-  "editorStyle": "kelsie-review-block-editor",
+  "description": "Outputs client testimonial repeater rows + auto-generated Review Schema.",
+  "keywords": ["review", "testimonials", "schema", "ratings"],
   "supports": {
     "anchor": true,
     "align": ["wide", "full"],
@@ -19,10 +14,16 @@
       "padding": true
     }
   },
-  "attributes": {
-    "data": {
-      "type": "object",
-      "default": {}
+  "style": "kelsie-review-block",
+  "editorStyle": "kelsie-review-block-editor",
+  "viewScript": "file:./frontend.js",
+  "acf": {
+    "mode": "preview",
+    "renderTemplate": "render.php"
+  },
+  "example": {
+    "attributes": {
+      "preview": true
     }
   }
 }
