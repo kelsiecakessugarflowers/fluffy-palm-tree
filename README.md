@@ -1,35 +1,52 @@
-# Kelsie Review Block
+# **Kelsie Review Block**
 
-A lightweight testimonials plugin that provides the **Review List** block with ACF-powered fields and Rank Math schema output. Content is managed directly in the block (or via ACF fields) without any custom post types.
+A lightweight, ACF-native testimonials plugin that provides the **Review List** block using an ACF Repeater field and automatic Rank Math review schema.
+No custom post types. No admin screens. All content is managed directly inside the block.
 
-## Installation
-1. Copy this folder to `wp-content/plugins/kelsie-review-block` inside your WordPress installation.
+## **Installation**
+
+1. Copy this folder to `wp-content/plugins/kelsie-review-block` in your WordPress installation.
 2. Activate **Kelsie Review Block** from the Plugins screen.
-3. (Optional) Activate ACF or ACF Pro to use the bundled reviewer name, role, and rating fields.
+3. Ensure **ACF Pro** (recommended) or ACF Free is active. The block depends on ACF to provide and render its fields.
 
-## Usage
-- Add the **Review List** block to a page or template and configure the ACF repeater fields (review body, title, reviewer name, and rating) for each testimonial.
-- If ACF is missing or inactive, the block renders a fallback notice explaining that testimonials are unavailable.
+## **Usage**
 
-The plugin also loads front-end and editor styles for the block and injects an ItemList schema via Rank Math based on the testimonials entered into the block.
+* Add the **Review List** block (`kelsiecakes/review-list`) to any page or template.
+* Add testimonial content using the ACF Repeater fields that appear in the block sidebar.
+* The block renders dynamically using `render.php` and outputs matching Review Schema (ItemList + Review) via Rank Math.
 
-## ACF Required Field Structure
+If ACF is inactive, the block displays a simple fallback notice in both editor and front-end.
 
-Repeater: client_testimonials
- * Fields inside repeater:
-- reviewer_name (Text - required)
-- review_body (Textarea - required)
-- review_title (Text)
-- rating_number (Number, min 0 max 5, step 1)
-- review_id (Text)
-- review_original_location (URL)
+The plugin also loads custom front-end and editor styles and includes brand-style overrides via inline CSS.
 
-Location: Block equals kelsiecakes/review-list
+## **ACF Required Field Structure**
 
-## Front-end availability
-Front-end registration of the block is gated by the `kelsie_review_block_allowed_pages` filter. By default, the block only renders on page ID `11336`; update the `$allowed_pages` array inside `kelsie-review-block.php` if you want a different in-plugin default. If no allowed pages are provided, the plugin will automatically register the block when the current singular post contains a **Review List** block.
+Repeater: `client_testimonials`
 
-Enable the block on specific pages by returning a list of page IDs (or slugs) from the filter, for example in your theme's `functions.php`:
+* Fields inside repeater:
+
+- `reviewer_name` (Text — required)
+- `review_body` (Textarea — required)
+- `review_title` (Text)
+- `rating_number` (Number: 0–5, step 1)
+- `review_id` (Text)
+- `review_original_location` (URL)
+
+Location rule: **Block** equals **kelsiecakes/review-list**
+
+This ensures ACF passes all repeater data into `$block['data']` during rendering.
+
+## **Front-end availability**
+
+Front-end loading of the block, CSS, and schema logic is controlled by the
+`kelsie_review_block_allowed_pages` filter.
+
+### Default behavior:
+
+* If specific page IDs/slugs are defined in the plugin's `$allowed_pages`, only those pages will load the block.
+* If the list is empty, the plugin automatically enables itself for any singular post or page **that contains** a Review List block.
+
+### To override allowed pages:
 
 ```php
 add_filter( 'kelsie_review_block_allowed_pages', function( $allowed_pages ) {
@@ -38,7 +55,7 @@ add_filter( 'kelsie_review_block_allowed_pages', function( $allowed_pages ) {
 } );
 ```
 
-You can also merge with existing values if you need to add to an existing configuration:
+### To merge with existing values:
 
 ```php
 add_filter( 'kelsie_review_block_allowed_pages', function( $allowed_pages ) {
@@ -46,3 +63,17 @@ add_filter( 'kelsie_review_block_allowed_pages', function( $allowed_pages ) {
     return $allowed_pages;
 } );
 ```
+
+This selective-loading approach prevents unnecessary schema injection and avoids loading block assets across the entire site.
+
+## **Schema Output**
+
+For each Review List block rendered on a supported page, the plugin:
+
+* Extracts repeater rows from `$block['data']`
+* Normalizes them into valid Review objects
+* Generates stable, unique `@id` fragments for each review
+* Outputs an **ItemList** schema node containing all Reviews
+* Injects schema via Rank Math’s `rank_math/json_ld` filter
+
+Schema is only injected on the front-end for the exact pages where the block is present or has been explicitly allowed.
