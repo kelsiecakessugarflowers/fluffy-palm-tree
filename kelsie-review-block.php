@@ -3,12 +3,12 @@
  * Plugin Name: Kelsie Review Block
  * Description: Custom testimonial block using ACF repeater fields + automatic Review Schema via Rank Math.
  * Author: It Me
- * Version: 3.0.0
+ * Version: 3.0.1
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'KELSIE_REVIEW_BLOCK_VERSION', '3.0.0' );
+define( 'KELSIE_REVIEW_BLOCK_VERSION', '3.0.1' );
 
 /* -----------------------------------------------------------
  *  BRAND DESIGN CONSTANTS
@@ -61,7 +61,7 @@ final class KelsieReviewBlock {
         add_filter( 'rank_math/json_ld', [ $instance, 'inject_schema' ], 10, 2 );
 
         // Admin schema preview metabox.
-        add_action( 'add_meta_boxes', [ $instance, 'maybe_add_schema_metabox' ] );
+        add_action( 'add_meta_boxes', [ $instance, 'maybe_add_schema_metabox' ], 10, 2 );
     }
 
     /* -----------------------------------------------------------
@@ -449,34 +449,57 @@ CSS;
      *  ADMIN SCHEMA PREVIEW
      * ----------------------------------------------------------- */
 
-    public function maybe_add_schema_metabox() {
+    public function maybe_add_schema_metabox( $post_type, $post ) {
+        if ( ! $post instanceof WP_Post ) {
+            return;
+        }
+
         if ( ! $this->should_handle_request() ) {
             return;
         }
 
         add_meta_box(
             'kelsie_review_schema_preview',
-            'Review Schema Preview (Auto-Detected)',
+            __( 'Review Schema Preview (Auto-Detected)', 'kelsie' ),
             [ $this, 'render_schema_metabox' ],
-            ['post','page'],
+            $post_type,
             'normal',
             'default'
         );
     }
 
     public function render_schema_metabox( $post ) {
-
         $jsonld = $this->get_rank_math_jsonld_instance();
 
-        if ( $jsonld && method_exists( $jsonld, 'can_add_global_entities' ) ) {
+        if ( ! $jsonld ) {
+            echo '<p>' . esc_html__( 'Rank Math is inactive. Schema preview is unavailable.', 'kelsie' ) . '</p>';
+            return;
+        }
+
+        $has_review_block = (
+            has_block( 'kelsiecakes/review-list', $post ) ||
+            has_block( 'acf/kelsiecakes-review-list', $post )
+        );
+
+        if ( ! $has_review_block ) {
+            echo '<p>' . esc_html__( 'Add a Review List block to preview the generated schema.', 'kelsie' ) . '</p>';
+            return;
+        }
+
+        if ( method_exists( $jsonld, 'can_add_global_entities' ) ) {
             $data = apply_filters( 'rank_math/json_ld', [], $jsonld );
         } else {
             $data = [];
         }
 
-        $json = json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+        if ( empty( $data ) ) {
+            echo '<p>' . esc_html__( 'Schema data is not available for this post yet.', 'kelsie' ) . '</p>';
+            return;
+        }
 
-        echo '<p>This is the JSON-LD generated from your Review List blocks. It updates automatically as you edit.</p>';
+        $json = wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+
+        echo '<p>' . esc_html__( 'This JSON-LD is generated from your Review List blocks and updates automatically.', 'kelsie' ) . '</p>';
         echo '<pre style="background:#f7f7f7;padding:15px;border:1px solid #ddd;max-height:500px;overflow:auto;">';
         echo esc_html( $json );
         echo '</pre>';
