@@ -8,7 +8,7 @@ A lightweight testimonials plugin that provides the **Review List** block with A
 3. (Optional) Activate ACF or ACF Pro to use the bundled reviewer name, role, and rating fields.
 
 ## Usage
-- Add the **Review List** block to a page or template and fill in the testimonial fields.
-- Use the block's ACF repeater to manage multiple testimonials within the same block instance.
+- Add the **Review List** block to a page or template and configure the ACF repeater fields (review body, title, reviewer name, and rating) for each testimonial.
+- If ACF is missing or inactive, the block renders a fallback notice explaining that testimonials are unavailable.
 
 The plugin also loads front-end and editor styles for the block and injects an ItemList schema via Rank Math based on the testimonials entered into the block.
