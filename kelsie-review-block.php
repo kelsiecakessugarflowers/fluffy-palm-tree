@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Kelsie Review Block
  * Description: Custom testimonial block with ACF repeater + Rank Math schema.
- * Version: 2.1
+ * Version: 2.2
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -46,44 +46,102 @@ define( 'KELSIE_BRAND', [
 
 final class KelsieReviewBlock {
 
+	private $allowed_pages = [];
+
+	private $block_registered = false;
+
 	public static function init() {
 		$instance = new self();
 
-		add_action( 'init', [ $instance, 'register_block' ] );
+		add_action( 'init', [ $instance, 'bootstrap' ] );
 		add_filter( 'rank_math/json_ld', [ $instance, 'inject_schema' ], 10, 2 );
-		add_action( 'add_meta_boxes', [ $instance, 'add_schema_metabox' ] );
 	}
 
-	/* -----------------------------------------------------------
-	 *  BLOCK REGISTRATION
-	 * ----------------------------------------------------------- */
-	public function register_block() {
-		$plugin_url = plugin_dir_url( __FILE__ );
-		$plugin_dir = plugin_dir_path( __FILE__ );
+	public function bootstrap() {
+		if ( $this->should_load_in_admin() ) {
+			$this->register_block();
+			add_action( 'add_meta_boxes', [ $this, 'add_schema_metabox' ] );
+		}
 
-		wp_register_style(
-			'kelsie-review-block',
-			$plugin_url . 'style.css',
-			[],
-			filemtime( $plugin_dir . 'style.css' )
-		);
-
-		wp_register_style(
-			'kelsie-review-block-editor',
-			$plugin_url . 'editor.css',
-			[],
-			filemtime( $plugin_dir . 'editor.css' )
-		);
-
-		register_block_type(
-			__DIR__,
-			[
-				'style'          => 'kelsie-review-block',
-				'editor_style'   => 'kelsie-review-block-editor',
-				'render_callback' => [ $this, 'render_block' ],
-			]
-		);
+		add_action( 'wp', [ $this, 'maybe_register_frontend_block' ] );
 	}
+
+	private function get_allowed_pages() {
+		$allowed = apply_filters( 'kelsie_review_block_allowed_pages', $this->allowed_pages );
+
+		if ( ! is_array( $allowed ) ) {
+			return [];
+		}
+
+		return array_values( array_filter( $allowed, static function ( $value ) {
+			return ( is_string( $value ) || is_int( $value ) ) && $value !== '';
+		} ) );
+	}
+
+	private function should_load_in_admin() {
+		return is_admin() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || wp_doing_ajax();
+	}
+
+	private function should_handle_request() {
+		if ( $this->should_load_in_admin() ) {
+			return true;
+		}
+
+		$allowed = $this->get_allowed_pages();
+		if ( empty( $allowed ) ) {
+			return false;
+		}
+
+		return is_page( $allowed );
+	}
+
+	public function maybe_register_frontend_block() {
+		if ( ! $this->should_handle_request() ) {
+			return;
+		}
+
+		$this->register_block();
+	}
+
+        /* -----------------------------------------------------------
+         *  BLOCK REGISTRATION
+         * ----------------------------------------------------------- */
+        public function register_block() {
+                if ( $this->block_registered ) {
+                        return;
+                }
+
+                if ( ! $this->should_handle_request() ) {
+                        return;
+                }
+
+                $this->block_registered = true;
+                $plugin_url = plugin_dir_url( __FILE__ );
+                $plugin_dir = plugin_dir_path( __FILE__ );
+
+                wp_register_style(
+                        'kelsie-review-block',
+                        $plugin_url . 'style.css',
+                        [],
+                        filemtime( $plugin_dir . 'style.css' )
+                );
+
+                wp_register_style(
+                        'kelsie-review-block-editor',
+                        $plugin_url . 'editor.css',
+                        [],
+                        filemtime( $plugin_dir . 'editor.css' )
+                );
+
+                register_block_type(
+                        __DIR__,
+                        [
+                                'style'           => 'kelsie-review-block',
+                                'editor_style'    => 'kelsie-review-block-editor',
+                                'render_callback' => [ $this, 'render_block' ],
+                        ]
+                );
+        }
 
 	public function render_block( $attributes, $content ) {
 		ob_start();
@@ -189,15 +247,19 @@ final class KelsieReviewBlock {
 	}
 
 
-	/* -----------------------------------------------------------
-	 *  SCHEMA INJECTION
-	 * ----------------------------------------------------------- */
+        /* -----------------------------------------------------------
+         *  SCHEMA INJECTION
+         * ----------------------------------------------------------- */
 
-	public function inject_schema( $data, $jsonld ) {
+        public function inject_schema( $data, $jsonld ) {
 
-		$post = get_queried_object();
-		if ( ! ( $post instanceof WP_Post ) )
-			return $data;
+                if ( ! $this->should_handle_request() ) {
+                        return $data;
+                }
+
+                $post = get_queried_object();
+                if ( ! ( $post instanceof WP_Post ) )
+                        return $data;
 
 		$permalink = get_permalink( $post );
 		if ( ! $permalink )
@@ -281,12 +343,16 @@ final class KelsieReviewBlock {
 
 	/* -----------------------------------------------------------
 	 *  SCHEMA PREVIEW
-	 * ----------------------------------------------------------- */
+         * ----------------------------------------------------------- */
 
-	public function add_schema_metabox() {
-		add_meta_box(
-			'kelsie_review_schema_preview',
-			'Review Schema Preview (Auto-Detected)',
+        public function add_schema_metabox() {
+                if ( ! $this->should_handle_request() ) {
+                        return;
+                }
+
+                add_meta_box(
+                        'kelsie_review_schema_preview',
+                        'Review Schema Preview (Auto-Detected)',
 			[ $this, 'render_schema_metabox' ],
 			['post', 'page'],
 			'normal',
