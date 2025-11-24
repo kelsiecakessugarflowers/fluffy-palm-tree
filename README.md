@@ -27,7 +27,7 @@ Repeater: client_testimonials
 Location: Block equals kelsiecakes/review-list
 
 ## Front-end availability
-Front-end registration of the block is gated by the `kelsie_review_block_allowed_pages` filter. By default, the block only renders on page ID `11336`; update the `$allowed_pages` array inside `kelsie-review-block.php` if you want a different in-plugin default. If no allowed pages are provided, the block will not register on the front end, and nothing will render for site visitors.
+Front-end registration of the block is gated by the `kelsie_review_block_allowed_pages` filter. By default, the block only renders on page ID `11336`; update the `$allowed_pages` array inside `kelsie-review-block.php` if you want a different in-plugin default. If no allowed pages are provided, the plugin will automatically register the block when the current singular post contains a **Review List** block.
 
 Enable the block on specific pages by returning a list of page IDs (or slugs) from the filter, for example in your theme's `functions.php`:
 
