@@ -1,17 +1,36 @@
 /**
  * Editor styles for the Kelsie Review Block.
- * Keep neutral—branding is handled on the front end via inline CSS.
+ * Mirrors the branded front-end layout while remaining editor-safe.
  */
 
-/* Layout only */
+.kelsie-review-block {
+    font-family: "Raleway", sans-serif;
+    color: #492c38;
+}
+
+.kelsie-review-block__list {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    padding: 0;
+    margin: 0;
+}
+
+.kelsie-review-block__item {
+    list-style: none;
+}
+
+/* Card shell to mimic live spacing + borders */
 .kelsie-review-block .wp-block-pullquote {
     box-sizing: border-box;
     max-width: 70rem;
-    margin: 2rem auto;
-    padding: 2rem 1.5rem;
-    background-color: #f3f3f3; /* neutral editor-only background */
-    border: 1px solid #ddd;   /* light editor-only border */
+    margin: 0 auto;
+    padding: 3rem clamp(1.75rem, 4vw, 3rem);
+    background-color: #fff9fc;
+    border: 1px solid #e5b9d2;
+    border-radius: 18px;
     text-align: left;
+    box-shadow: 0 10px 40px rgba(73, 44, 56, 0.06);
 }
 
 /* Reset spacing inside the editor */
@@ -25,36 +44,58 @@
 /* Review text typography */
 .kelsie-review-block .wp-block-pullquote p {
     font-family: "Source Serif Pro", Georgia, serif;
-    font-size: 1.2rem;
-    line-height: 1.6;
+    font-size: 1.3rem;
+    line-height: 1.7;
     max-width: 60rem;
 }
 
-/* Fake decorative quote (simplified, neutral color) */
+.kelsie-review-block .wp-block-pullquote p.review-title {
+    font-family: "Raleway", sans-serif;
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+}
+
+/* Decorative quote mark */
 .kelsie-review-block .wp-block-pullquote blockquote::before {
     content: "“";
     display: block;
-    font-size: 2.5rem;
+    font-family: "Source Serif Pro", Georgia, serif;
+    font-size: 3.2rem;
     line-height: 1;
-    margin-bottom: 0.75rem;
-    color: #ccc;
+    margin-bottom: 1rem;
+    color: #a9a4e1;
 }
 
 /* Citation line */
 .kelsie-review-block .wp-block-pullquote cite {
-    display: block;
-    margin-top: 1rem;
+    display: flex;
+    gap: 0.35rem;
+    align-items: baseline;
+    margin-top: 1.5rem;
     font-family: "Raleway", sans-serif;
-    font-size: 0.9rem;
-    opacity: 0.8;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    color: #6b7b65;
+}
+
+.kelsie-review-block .kelsie-review-block__name {
+    font-weight: 700;
+    color: #492c38;
+}
+
+.kelsie-review-block .kelsie-review-block__rating {
+    font-weight: 600;
 }
 
 /* Notice if ACF is missing */
 .kelsie-review-block__notice {
-    margin: 2rem 0;
+    margin: 0;
     padding: 1.5rem;
     background: #fff4f8;
-    border-left: 4px solid #e5b9d2;
+    border: 1px solid #e5b9d2;
+    border-radius: 12px;
     color: #492c38;
     font-family: "Raleway", sans-serif;
     font-size: 0.95rem;
@@ -62,14 +103,18 @@
 
 /* Editor mobile-ish behavior */
 @media (max-width: 768px) {
+    .kelsie-review-block__list {
+        gap: 1.75rem;
+    }
+
     .kelsie-review-block .wp-block-pullquote {
-        margin: 1.5rem 0.5rem;
-        padding: 1.5rem 1rem;
+        margin: 0 0.25rem;
+        padding: 2.25rem 1.5rem;
     }
 
     .kelsie-review-block .wp-block-pullquote p {
-        font-size: 1.05rem;
-        line-height: 1.5;
+        font-size: 1.12rem;
+        line-height: 1.65;
         max-width: 100%;
     }
 }
