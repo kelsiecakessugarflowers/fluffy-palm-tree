@@ -89,6 +89,30 @@
     font-weight: 600;
 }
 
+.kelsie-review-block__editor {
+    margin-top: 1.5rem;
+}
+
+.kelsie-review-block__field .components-base-control__label {
+    font-weight: 600;
+    color: #492c38;
+}
+
+.kelsie-review-block__field .components-textarea-control__input,
+.kelsie-review-block__field .components-text-control__input {
+    width: 100%;
+}
+
+.kelsie-review-block__inline-tip {
+    margin-top: 1rem;
+    color: #6b7b65;
+    font-size: 0.9rem;
+}
+
+.kelsie-review-block__add {
+    margin-top: 1rem;
+}
+
 /* Notice if ACF is missing */
 .kelsie-review-block__notice {
     margin: 0;
