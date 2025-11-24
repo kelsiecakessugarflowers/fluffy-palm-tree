@@ -3,12 +3,12 @@
  * Plugin Name: Kelsie Review Block
  * Description: Custom testimonial block using ACF repeater fields + automatic Review Schema via Rank Math.
  * Author: It Me
- * Version: 3.1.0
+ * Version: 3.1.1
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'KELSIE_REVIEW_BLOCK_VERSION', '3.1.0' );
+define( 'KELSIE_REVIEW_BLOCK_VERSION', '3.1.1' );
 
 /* -----------------------------------------------------------
  *  BRAND DESIGN CONSTANTS
@@ -135,9 +135,22 @@ final class KelsieReviewBlock {
         ]);
     }
 
-    public function render_block( $block, $content = '', $is_preview = false, $post_id = 0 ) { 
+    public function render_block( $block, $content = '', $is_preview = false, $post_id = 0 ) {
+        if ( $block instanceof WP_Block ) {
+            $block = [
+                'name'   => $block->name,
+                'id'     => $block->parsed_block['id'] ?? '',
+                'anchor' => $block->attributes['anchor'] ?? '',
+                'data'   => $block->attributes ?? [],
+            ];
+        }
+
+        if ( ! is_array( $block ) ) {
+            return '';
+        }
+
         ob_start();
-        include plugin_dir_path(__FILE__) . 'render.php';
+        include plugin_dir_path( __FILE__ ) . 'render.php';
         return ob_get_clean();
     }
 
