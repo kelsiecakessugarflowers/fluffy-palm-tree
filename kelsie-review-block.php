@@ -3,12 +3,12 @@
  * Plugin Name: Kelsie Review Block
  * Description: Custom testimonial block with ACF repeater + Rank Math schema.
  * Author: It Me
- * Version: 2.4.3
+ * Version: 2.4.4
 */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'KELSIE_REVIEW_BLOCK_VERSION', '2.4.3' );
+define( 'KELSIE_REVIEW_BLOCK_VERSION', '2.4.4' );
 
 	/* -----------------------------------------------------------
 	 *  BRAND DESIGN CONSTANTS
@@ -197,8 +197,8 @@ final class KelsieReviewBlock {
 					continue;
 				}
 
-				$data = $block['attrs']['data'] ?? [];
-				$rows = $this->normalize_repeater_rows( $data );
+                                $data = $block['attrs']['data'] ?? [];
+                                $rows = self::normalize_repeater_rows( $data );
 				if ( empty( $rows ) )
 					continue;
 
@@ -223,7 +223,7 @@ final class KelsieReviewBlock {
 		return $found;
 	}
 
-	private function normalize_repeater_rows( $data ) {
+    public static function normalize_repeater_rows( $data ) {
 		$rows = [];
 
 		if ( isset( $data['client_testimonials'] ) &&
