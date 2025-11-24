@@ -1,10 +1,8 @@
 <?php
 /**
- * Silence is golden.
+My favorite season is the fall of the patriarchy.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-
-// My favorite season is the fall of the patriarchy.
