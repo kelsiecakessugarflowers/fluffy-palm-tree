@@ -3,12 +3,12 @@
  * Plugin Name: Kelsie Review Block
  * Description: Custom testimonial block with ACF repeater + Rank Math schema.
  * Author: It Me
- * Version: 2.4.4
+ * Version: 2.4.5
 */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'KELSIE_REVIEW_BLOCK_VERSION', '2.4.4' );
+define( 'KELSIE_REVIEW_BLOCK_VERSION', '2.4.5' );
 
 	/* -----------------------------------------------------------
 	 *  BRAND DESIGN CONSTANTS
@@ -52,23 +52,22 @@ final class KelsieReviewBlock {
         // Restrict front-end registration to specific pages. Update this array to change defaults.
         private $allowed_pages = [ 11336 ];
 
-	private $block_registered = false;
+        private $block_registered = false;
 
-	public static function init() {
-		$instance = new self();
+        public static function init() {
+                $instance = new self();
 
-		add_action( 'init', [ $instance, 'bootstrap' ] );
-		add_filter( 'rank_math/json_ld', [ $instance, 'inject_schema' ], 10, 2 );
-	}
+                add_action( 'init', [ $instance, 'bootstrap' ] );
+                add_filter( 'rank_math/json_ld', [ $instance, 'inject_schema' ], 10, 2 );
+        }
 
-	public function bootstrap() {
-		if ( $this->should_load_in_admin() ) {
-			$this->register_block();
-			add_action( 'add_meta_boxes', [ $this, 'add_schema_metabox' ] );
-		}
+        public function bootstrap() {
+                $this->register_block();
 
-		add_action( 'wp', [ $this, 'maybe_register_frontend_block' ] );
-	}
+                if ( $this->should_load_in_admin() ) {
+                        add_action( 'add_meta_boxes', [ $this, 'add_schema_metabox' ] );
+                }
+        }
 
 	private function get_allowed_pages() {
 		$allowed = apply_filters( 'kelsie_review_block_allowed_pages', $this->allowed_pages );
@@ -115,23 +114,19 @@ final class KelsieReviewBlock {
                         || has_block( 'acf/kelsiecakes-review-list', $post->post_content );
         }
 
-	public function maybe_register_frontend_block() {
-		if ( ! $this->should_handle_request() ) {
-			return;
-		}
+        public function maybe_register_frontend_block() {
+                if ( ! $this->should_handle_request() ) {
+                        return;
+                }
 
-		$this->register_block();
-	}
+                $this->register_block();
+        }
 
         /* -----------------------------------------------------------
          *  BLOCK REGISTRATION
          * ----------------------------------------------------------- */
         public function register_block() {
                 if ( $this->block_registered ) {
-                        return;
-                }
-
-                if ( ! $this->should_handle_request() ) {
                         return;
                 }
 
