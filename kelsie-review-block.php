@@ -3,12 +3,12 @@
  * Plugin Name: Kelsie Review Block
  * Description: Custom testimonial block with ACF repeater + Rank Math schema.
  * Author: It Me
- * Version: 2.4.1
+ * Version: 2.4.2
 */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'KELSIE_REVIEW_BLOCK_VERSION', '2.4.1' );
+define( 'KELSIE_REVIEW_BLOCK_VERSION', '2.4.2' );
 
 	/* -----------------------------------------------------------
 	 *  BRAND DESIGN CONSTANTS
@@ -346,12 +346,26 @@ final class KelsieReviewBlock {
 			];
 		}
 
-		return $data;
-	}
+                return $data;
+        }
+
+        private function get_rank_math_jsonld_instance() {
+                if ( ! function_exists( 'rank_math' ) ) {
+                        return null;
+                }
+
+                $plugin = rank_math();
+
+                if ( ! is_object( $plugin ) || ! isset( $plugin->json_ld ) || ! is_object( $plugin->json_ld ) ) {
+                        return null;
+                }
+
+                return $plugin->json_ld;
+        }
 
 
-	/* -----------------------------------------------------------
-	 *  SCHEMA PREVIEW
+        /* -----------------------------------------------------------
+         *  SCHEMA PREVIEW
          * ----------------------------------------------------------- */
 
         public function add_schema_metabox() {
@@ -369,10 +383,15 @@ final class KelsieReviewBlock {
 		);
 	}
 
-	public function render_schema_metabox( $post ) {
+        public function render_schema_metabox( $post ) {
 
-		$data = apply_filters( 'rank_math/json_ld', [], [] );
-		$json = json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+                $jsonld = $this->get_rank_math_jsonld_instance();
+                if ( $jsonld && method_exists( $jsonld, 'can_add_global_entities' ) ) {
+                        $data = apply_filters( 'rank_math/json_ld', [], $jsonld );
+                } else {
+                        $data = [];
+                }
+                $json = json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
 
 		echo '<p>This is the JSON-LD generated from your Review Block(s). It updates automatically based on the content of this post.</p>';
 		echo '<pre style="background:#f7f7f7;padding:15px;border:1px solid #ddd;max-height:500px;overflow:auto;">';
