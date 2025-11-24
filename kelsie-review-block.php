@@ -141,6 +141,12 @@ final class KelsieReviewBlock {
                         filemtime( $plugin_dir . 'style.css' )
                 );
 
+                $brand_styles = $this->get_brand_style_css();
+
+                if ( '' !== $brand_styles ) {
+                        wp_add_inline_style( 'kelsie-review-block', $brand_styles );
+                }
+
                 wp_register_style(
                         'kelsie-review-block-editor',
                         $plugin_url . 'editor.css',
@@ -162,6 +168,115 @@ final class KelsieReviewBlock {
                 ob_start();
                 include plugin_dir_path(__FILE__) . 'render.php';
                 return ob_get_clean();
+        }
+
+        private function get_brand_style_css() {
+                $brand = defined( 'KELSIE_BRAND' ) && is_array( KELSIE_BRAND )
+                        ? KELSIE_BRAND
+                        : [];
+
+                $color = $brand['color'] ?? [];
+                $font  = $brand['font'] ?? [];
+                $space = $brand['space'] ?? [];
+                $width = $brand['width'] ?? [];
+
+                $bg_light   = $color['bg_light'] ?? '#FFF9FC';
+                $border     = $color['border'] ?? '#E5B9D2';
+                $text_dark  = $color['text_dark'] ?? '#492C38';
+                $accent     = $color['accent'] ?? '#A9A4E1';
+                $text_muted = $color['text_muted'] ?? '#6B7B65';
+
+                $font_serif = $font['serif'] ?? '"Source Serif 4", Georgia, serif';
+                $font_sans  = $font['sans'] ?? '"Raleway", sans-serif';
+
+                $desktop_margin   = $space['desktop_margin'] ?? '4rem auto';
+                $desktop_padding  = $space['desktop_padding'] ?? '3rem clamp(1.75rem, 4vw, 3rem)';
+                $mobile_margin    = $space['mobile_margin'] ?? '3rem 1rem';
+                $mobile_padding   = $space['mobile_padding'] ?? '2.25rem 1.5rem';
+
+                $pullquote_max = $width['pullquote_max'] ?? '70rem';
+                $text_max      = $width['text_max'] ?? '60rem';
+
+                $css = <<<CSS
+.kelsie-review-block .wp-block-pullquote {
+    background-color: {$bg_light};
+    border: 1px solid {$border};
+    border-radius: 18px;
+    box-shadow: 0 10px 40px rgba(73, 44, 56, 0.06);
+    color: {$text_dark};
+    margin: {$desktop_margin};
+    max-width: {$pullquote_max};
+    padding: {$desktop_padding};
+    text-align: left;
+}
+
+.kelsie-review-block .wp-block-pullquote p,
+.kelsie-review-block .wp-block-pullquote blockquote,
+.kelsie-review-block .wp-block-pullquote cite {
+    margin: 0;
+    color: inherit;
+}
+
+.kelsie-review-block .wp-block-pullquote p {
+    font-family: {$font_serif};
+    font-size: 1.3rem;
+    line-height: 1.7;
+    max-width: {$text_max};
+}
+
+.kelsie-review-block .wp-block-pullquote p.review-title {
+    font-family: {$font_sans};
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+}
+
+.kelsie-review-block .wp-block-pullquote blockquote::before {
+    content: "“";
+    display: block;
+    font-family: {$font_serif};
+    font-size: 3.2rem;
+    line-height: 1;
+    margin-bottom: 1rem;
+    color: {$accent};
+}
+
+.kelsie-review-block .wp-block-pullquote cite {
+    display: flex;
+    gap: 0.35rem;
+    align-items: baseline;
+    margin-top: 1.5rem;
+    font-family: {$font_sans};
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    color: {$text_muted};
+}
+
+.kelsie-review-block .kelsie-review-block__name {
+    font-weight: 700;
+    color: {$text_dark};
+}
+
+.kelsie-review-block .kelsie-review-block__rating {
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .kelsie-review-block .wp-block-pullquote {
+        margin: {$mobile_margin};
+        padding: {$mobile_padding};
+    }
+
+    .kelsie-review-block .wp-block-pullquote p {
+        font-size: 1.12rem;
+        line-height: 1.65;
+        max-width: 100%;
+    }
+}
+CSS;
+
+                return trim( $css );
         }
 
 
