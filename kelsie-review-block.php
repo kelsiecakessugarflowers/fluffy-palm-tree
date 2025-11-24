@@ -7,6 +7,43 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+	/* -----------------------------------------------------------
+	 *  BRAND DESIGN CONSTANTS
+	 * ----------------------------------------------------------- */
+
+define( 'KELSIE_BRAND', [
+
+    // COLORS
+    'color' => [
+        'bg_light'       => '#FFF9FC', // blush background
+        'border'         => '#E5B9D2', // Soft Orchid
+        'text_dark'      => '#492C38', // deep plum
+        'accent'         => '#A9A4E1', // the big quote mark
+        'text_muted'     => '#6B7B65', // muted sage for reviewer name
+    ],
+
+    // TYPOGRAPHY
+    'font' => [
+        'serif'          => '"Source Serif 4", Georgia, serif',
+        'sans'           => '"Raleway", sans-serif',
+    ],
+
+    // SPACING
+    'space' => [
+        'desktop_margin' => '4rem auto',
+        'desktop_padding'=> '3rem clamp(1.75rem, 4vw, 3rem)',
+        'mobile_margin'  => '3rem 1rem',
+        'mobile_padding' => '2.25rem 1.5rem',
+    ],
+
+    // WIDTHS
+    'width' => [
+        'pullquote_max'  => '70rem',
+        'text_max'       => '60rem',
+    ]
+] );
+
+
 final class KelsieReviewBlock {
 
 	public static function init() {
