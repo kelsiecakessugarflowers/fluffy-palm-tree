@@ -19,6 +19,16 @@ If ACF is inactive, the block displays a simple fallback notice in both editor a
 
 The plugin also loads custom front-end and editor styles and includes brand-style overrides via inline CSS.
 
+## **Disabling the built-in ACF repeater**
+
+If you maintain your own manual field group for the block, disable the plugin’s built-in **Client Testimonials** repeater to avoid duplicates in the editor:
+
+```php
+add_filter( 'kelsie_review_block_register_field_group', '__return_false' );
+```
+
+The filter runs before the local field group is registered, ensuring only one repeater appears for the Review List block.
+
 ## **ACF Required Field Structure**
 
 Repeater: `client_testimonials`
