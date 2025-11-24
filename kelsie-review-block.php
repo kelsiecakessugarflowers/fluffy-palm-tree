@@ -3,12 +3,12 @@
  * Plugin Name: Kelsie Review Block
  * Description: Custom testimonial block using ACF repeater fields + automatic Review Schema via Rank Math.
  * Author: It Me
- * Version: 3.0.0
+ * Version: 3.0.1
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'KELSIE_REVIEW_BLOCK_VERSION', '3.0.0' );
+define( 'KELSIE_REVIEW_BLOCK_VERSION', '3.0.1' );
 
 /* -----------------------------------------------------------
  *  BRAND DESIGN CONSTANTS
@@ -56,6 +56,9 @@ final class KelsieReviewBlock {
 
         // Register block through ACF, not core.
         add_action( 'acf/init', [ $instance, 'register_acf_block' ] );
+
+        // Register field group for the block.
+        add_action( 'acf/init', [ $instance, 'register_acf_field_group' ] );
 
         // Schema output.
         add_filter( 'rank_math/json_ld', [ $instance, 'inject_schema' ], 10, 2 );
@@ -117,10 +120,104 @@ final class KelsieReviewBlock {
         ]);
     }
 
-    public function render_block( $block, $content = '', $is_preview = false, $post_id = 0 ) {
+    public function render_block( $block, $content = '', $is_preview = false, $post_id = 0 ) { 
         ob_start();
         include plugin_dir_path(__FILE__) . 'render.php';
         return ob_get_clean();
+    }
+
+    /* -----------------------------------------------------------
+     *  FIELD GROUP REGISTRATION
+     * ----------------------------------------------------------- */
+
+    public function register_acf_field_group() {
+        if ( ! function_exists( 'acf_add_local_field_group' ) ) {
+            return; // ACF inactive.
+        }
+
+        acf_add_local_field_group(
+            [
+                'key'      => 'group_kelsie_review_list',
+                'title'    => __( 'Review List', 'kelsie' ),
+                'fields'   => [
+                    [
+                        'key'               => 'field_kelsie_client_testimonials',
+                        'label'             => __( 'Client Testimonials', 'kelsie' ),
+                        'name'              => 'client_testimonials',
+                        'type'              => 'repeater',
+                        'layout'            => 'row',
+                        'button_label'      => __( 'Add Testimonial', 'kelsie' ),
+                        'collapsed'         => 'field_kelsie_reviewer_name',
+                        'sub_fields'        => [
+                            [
+                                'key'               => 'field_kelsie_reviewer_name',
+                                'label'             => __( 'Reviewer Name', 'kelsie' ),
+                                'name'              => 'reviewer_name',
+                                'type'              => 'text',
+                                'required'          => 1,
+                            ],
+                            [
+                                'key'               => 'field_kelsie_review_body',
+                                'label'             => __( 'Review Body', 'kelsie' ),
+                                'name'              => 'review_body',
+                                'type'              => 'textarea',
+                                'required'          => 1,
+                                'new_lines'         => 'br',
+                            ],
+                            [
+                                'key'               => 'field_kelsie_review_title',
+                                'label'             => __( 'Review Title', 'kelsie' ),
+                                'name'              => 'review_title',
+                                'type'              => 'text',
+                                'required'          => 0,
+                            ],
+                            [
+                                'key'               => 'field_kelsie_rating_number',
+                                'label'             => __( 'Rating (1-5)', 'kelsie' ),
+                                'name'              => 'rating_number',
+                                'type'              => 'number',
+                                'instructions'      => __( 'Optional: numeric rating between 1 and 5.', 'kelsie' ),
+                                'required'          => 0,
+                                'min'               => 0,
+                                'max'               => 5,
+                                'step'              => 1,
+                            ],
+                            [
+                                'key'               => 'field_kelsie_review_id',
+                                'label'             => __( 'Review ID (optional)', 'kelsie' ),
+                                'name'              => 'review_id',
+                                'type'              => 'text',
+                                'instructions'      => __( 'Used to create stable schema anchors. Leave blank for automatic.', 'kelsie' ),
+                            ],
+                            [
+                                'key'               => 'field_kelsie_review_original_location',
+                                'label'             => __( 'Original Review URL', 'kelsie' ),
+                                'name'              => 'review_original_location',
+                                'type'              => 'url',
+                                'instructions'      => __( 'Optional link to the source of the review.', 'kelsie' ),
+                            ],
+                        ],
+                        'min'               => 0,
+                        'max'               => 0,
+                    ],
+                ],
+                'location' => [
+                    [
+                        [
+                            'param'    => 'block',
+                            'operator' => '==',
+                            'value'    => 'acf/kelsiecakes-review-list',
+                        ],
+                    ],
+                ],
+                'position'             => 'acf_after_title',
+                'style'                => 'seamless',
+                'label_placement'      => 'top',
+                'instruction_placement'=> 'label',
+                'active'               => true,
+                'description'          => __( 'Repeater fields for the Review List block.', 'kelsie' ),
+            ]
+        );
     }
 
     /* -----------------------------------------------------------
