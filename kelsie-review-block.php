@@ -46,7 +46,8 @@ define( 'KELSIE_BRAND', [
 
 final class KelsieReviewBlock {
 
-	private $allowed_pages = [];
+        // Restrict front-end registration to specific pages. Update this array to change defaults.
+        private $allowed_pages = [ 11336 ];
 
 	private $block_registered = false;
 
