@@ -32,7 +32,7 @@ return;
 ?>
 <div class="kelsie-review-block" role="region" aria-live="polite">
 <p class="kelsie-review-block__notice">
-<?php esc_html_e( 'Testimonials are unavailable because Advanced Custom Fields is inactive.', 'kelsie-review-block' ); ?>
+<?php esc_html_e( 'Oh dear. Testimonials are unavailable either because ACF Pro is inactive or because the patriarchy fucked up some shit (/or probably both)/.', 'kelsie-review-block' ); ?>
 </p>
 </div>
 <?php
