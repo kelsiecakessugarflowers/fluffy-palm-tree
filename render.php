@@ -5,6 +5,7 @@
 
 // Ensure ACF helpers exist before calling them.
 $acf_available = function_exists( 'have_rows' ) && function_exists( 'get_sub_field' );
+$is_editor     = is_admin();
 
 // Bail if no block context is provided.
 if ( ! isset( $block ) || ! is_array( $block ) ) {
@@ -24,24 +25,38 @@ if ( '' === $section_id ) {
 $section_id = 'kelsie-review-list';
 }
 
+$render_placeholder = static function ( $message ) use ( $section_id ) {
+?>
+    <section id="<?php echo esc_attr( $section_id ); ?>"
+        class="kelsie-review-block se-wpt"
+        aria-label="<?php esc_attr_e( 'Client testimonials', 'kelsie-review-block' ); ?>">
+
+        <div class="kelsie-review-block__list" role="list">
+            <article class="kelsie-review-block__item" role="listitem">
+                <p class="kelsie-review-block__notice"><?php echo esc_html( $message ); ?></p>
+            </article>
+        </div>
+    </section>
+<?php
+};
+
 // If ACF is not available, show notice on the frontend only.
 if ( ! $acf_available ) {
-if ( is_admin() ) {
-return;
-}
-?>
-<div class="kelsie-review-block" role="region" aria-live="polite">
-<p class="kelsie-review-block__notice">
-<?php esc_html_e( 'Oh dear. Testimonials are unavailable either because ACF Pro is inactive or because the patriarchy fucked up some shit (/or probably both)/.', 'kelsie-review-block' ); ?>
-</p>
-</div>
-<?php
-return;
+    if ( $is_editor ) {
+        $render_placeholder( __( 'Testimonials will display here when ACF is active.', 'kelsie-review-block' ) );
+        return;
+    }
+
+    return;
 }
 
 // If the repeater does not exist on this post, bail without rendering.
 if ( ! function_exists( 'have_rows' ) || ! have_rows( 'client_testimonials' ) ) {
-return;
+    if ( $is_editor ) {
+        $render_placeholder( __( 'Add client testimonials to show this block.', 'kelsie-review-block' ) );
+    }
+
+    return;
 }
 
 // Ensure the template only runs for the expected block.
