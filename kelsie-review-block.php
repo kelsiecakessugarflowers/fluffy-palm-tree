@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Kelsie Review Block
  * Description: Custom testimonial block with ACF repeater + Rank Math schema.
- * Version: 2.4
+ * Version: 2.5
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -89,8 +89,9 @@ final class KelsieReviewBlock {
                 }
 
                 $allowed = $this->get_allowed_pages();
+
                 if ( empty( $allowed ) ) {
-                        return true;
+                        return false;
                 }
 
                 return is_page( $allowed );
