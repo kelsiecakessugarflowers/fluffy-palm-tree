@@ -16,7 +16,6 @@
   },
   "style": "kelsie-review-block",
   "editorStyle": "kelsie-review-block-editor",
-  "viewScript": "file:./frontend.js",
   "acf": {
     "mode": "preview",
     "renderTemplate": "render.php"
