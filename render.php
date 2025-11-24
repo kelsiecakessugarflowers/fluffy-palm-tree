@@ -23,8 +23,11 @@ if ( method_exists( 'KelsieReviewBlock', 'normalize_repeater_rows' ) ) {
     $normalized_rows = KelsieReviewBlock::normalize_repeater_rows( $attributes_data );
 }
 
-// Ensure the template only runs for the expected block.
-if ( ! isset( $block['name'] ) || 'kelsiecakes/review-list' !== $block['name'] ) {
+// Ensure the template only runs for the expected block names.
+$block_name = isset( $block['name'] ) ? $block['name'] : '';
+$valid_names = [ 'kelsiecakes/review-list', 'acf/kelsiecakes-review-list' ];
+
+if ( ! in_array( $block_name, $valid_names, true ) ) {
     return;
 }
 
