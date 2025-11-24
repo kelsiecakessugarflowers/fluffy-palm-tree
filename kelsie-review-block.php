@@ -91,13 +91,28 @@ final class KelsieReviewBlock {
                         return true;
                 }
 
-                $allowed = $this->get_allowed_pages();
-
-                if ( empty( $allowed ) ) {
+                if ( ! is_singular() ) {
                         return false;
                 }
 
-                return is_page( $allowed );
+                $allowed = $this->get_allowed_pages();
+
+                if ( ! empty( $allowed ) ) {
+                        return is_page( $allowed );
+                }
+
+                $post = get_queried_object();
+
+                if ( ! ( $post instanceof WP_Post ) ) {
+                        return false;
+                }
+
+                if ( ! function_exists( 'has_block' ) ) {
+                        return false;
+                }
+
+                return has_block( 'kelsiecakes/review-list', $post->post_content )
+                        || has_block( 'acf/kelsiecakes-review-list', $post->post_content );
         }
 
 	public function maybe_register_frontend_block() {
