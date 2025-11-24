@@ -1,10 +1,10 @@
-# Fluffy Palm Tree Testimonials
+# Kelsie Review Block
 
-A lightweight testimonials plugin that provides an ACF-powered review block and Rank Math schema output. Content is managed directly in the block (or via ACF fields) without any custom post types.
+A lightweight testimonials plugin that provides the **Review List** block with ACF-powered fields and Rank Math schema output. Content is managed directly in the block (or via ACF fields) without any custom post types.
 
 ## Installation
-1. Copy this folder to `wp-content/plugins/fluffy-palm-tree` inside your WordPress installation.
-2. Activate **Fluffy Palm Tree Testimonials** from the Plugins screen.
+1. Copy this folder to `wp-content/plugins/kelsie-review-block` inside your WordPress installation.
+2. Activate **Kelsie Review Block** from the Plugins screen.
 3. (Optional) Activate ACF or ACF Pro to use the bundled reviewer name, role, and rating fields.
 
 ## Usage
