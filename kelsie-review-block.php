@@ -92,8 +92,9 @@ final class KelsieReviewBlock {
                 }
 
                 $allowed = $this->get_allowed_pages();
+
                 if ( empty( $allowed ) ) {
-                        return true;
+                        return false;
                 }
 
                 return is_page( $allowed );
