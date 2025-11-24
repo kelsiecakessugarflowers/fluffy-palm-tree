@@ -3,12 +3,12 @@
  * Plugin Name: Kelsie Review Block
  * Description: Custom testimonial block using ACF repeater fields + automatic Review Schema via Rank Math.
  * Author: It Me
- * Version: 3.0.0
+ * Version: 3.0.1
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'KELSIE_REVIEW_BLOCK_VERSION', '3.0.0' );
+define( 'KELSIE_REVIEW_BLOCK_VERSION', '3.0.1' );
 
 /* -----------------------------------------------------------
  *  BRAND DESIGN CONSTANTS
