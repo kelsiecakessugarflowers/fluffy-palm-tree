@@ -1,94 +1,76 @@
-.kelsie-review-block .wp-block-pullquote {
-  max-width: 70rem;
-  margin: 4rem auto;
-  padding: 3rem clamp(1.75rem, 4vw, 3rem);
-  background-color: #FFF9FC;
-  border-top: 2px solid #E5B9D2;
-  border-bottom: 2px solid #E5B9D2;
-  text-align: left;
-}
-.kelsie-review-block .wp-block-pullquote cite {
-  display: block;
-  margin-top: 1.75rem;
-  font-family: "Raleway", sans-serif;
-  font-size: 1rem;
-  color: #6B7B65;
-}
+/**
+ * Base layout for the Kelsie Review Block
+ * Colors, fonts, spacing, borders, etc. are injected dynamically from PHP.
+ * This file only handles structural layout and safe defaults.
+ */
+
+/* Remove WP default blockquote box styling inside .se-wpt */
 .se-wpt blockquote {
-    background: transparent !important;
-    margin: 0 !important;
-    max-width: none !important;
-    padding: 0 !important;
+    background: transparent !important;
+    margin: 0 !important;
+    max-width: none !important;
+    padding: 0 !important;
 }
 
+/* Pullquote container – layout only (visuals are inline-styled by PHP) */
 .se-wpt .wp-block-pullquote {
-    box-sizing: border-box;
-    max-width: 70rem;      
-    margin: 4rem auto;     
-    padding: 3rem clamp(1.75rem, 4vw, 3rem);
-    background-color: #FFF9FC;  
-    border-top: 2px solid #E5B9D2;   
-    border-bottom: 2px solid #E5B9D2;
-    text-align: left;                   
+    box-sizing: border-box;
+    max-width: 70rem;
+    margin: 4rem auto;              /* Fallback spacing */
+    padding: 3rem clamp(1.75rem, 4vw, 3rem);
+    text-align: left;
 }
 
-
+/* Remove spacing inside the component */
 .se-wpt .wp-block-pullquote blockquote,
 .se-wpt .wp-block-pullquote p,
 .se-wpt .wp-block-pullquote cite {
-    margin: 0;
-    color: inherit;
+    margin: 0;
+    color: inherit;
 }
 
+/* Typography defaults (actual colors are applied inline) */
 .se-wpt .wp-block-pullquote p {
-    font-family: "Source Serif Pro", Georgia, serif;
-    font-size: 1.35rem;
-    line-height: 1.7;
-    color: #492C38;                     
-    max-width: 60rem;                   
+    font-family: "Source Serif Pro", Georgia, serif;
+    font-size: 1.35rem;
+    line-height: 1.7;
+    max-width: 60rem;
 }
 
-
+/* Decorative quote defaults */
 .se-wpt .wp-block-pullquote blockquote::before {
-    content: "“";
-    display: block;
-    font-family: "Source Serif Pro", Georgia, serif;
-    font-size: 3.6rem;
-    line-height: 1;
-    margin-bottom: 1rem;
-    color: #A9A4E1;                       
+    content: "“";
+    display: block;
+    font-family: "Source Serif Pro", Georgia, serif;
+    font-size: 3.6rem;
+    line-height: 1;
+    margin-bottom: 1rem;
 }
 
+/* Name line defaults */
 .se-wpt .wp-block-pullquote cite {
-    display: block;
-    margin-top: 1.75rem;
-    font-family: "Raleway", sans-serif;
-    font-size: 1rem;
-    letter-spacing: 0.06em;
-    color: #6B7B65;
+    display: block;
+    margin-top: 1.75rem;
+    font-family: "Raleway", sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
 }
 
+/* Solid color variant (colors are overridden dynamically) */
 .se-wpt .wp-block-pullquote.is-style-solid-color {
-    background-color: #E5B9D2;
-    border: none;
-    color: #492C38;
-}
-
-.se-wpt .wp-block-pullquote.is-style-solid-color blockquote::before {
-    color: #492C38;
+    border: none;
 }
 
 /* Mobile tweaks */
 @media (max-width: 768px) {
-    .se-wpt .wp-block-pullquote {
-        margin: 3rem 1rem;
-        padding: 2.25rem 1.5rem;
-    }
+    .se-wpt .wp-block-pullquote {
+        margin: 3rem 1rem;
+        padding: 2.25rem 1.5rem;
+    }
 
-    .se-wpt .wp-block-pullquote p {
-        font-size: 1.15rem;
-        line-height: 1.65;
-        max-width: 100%;
-    }
+    .se-wpt .wp-block-pullquote p {
+        font-size: 1.15rem;
+        line-height: 1.65;
+        max-width: 100%;
+    }
 }
-
