@@ -60,11 +60,9 @@ $render_placeholder = static function ( $message ) use ( $section_id ) {
 <?php
 };
 
-// If ACF is not available, render normalized rows or show notice on the frontend only.
+// If ACF is not available, render normalized rows or show notice in all contexts.
 if ( ! $acf_available && empty( $normalized_rows ) ) {
-    if ( $is_editor ) {
-        $render_placeholder( __( 'Testimonials will display here when ACF is active.', 'kelsie-review-block' ) );
-    }
+    $render_placeholder( __( 'Testimonials will display here when ACF is active.', 'kelsie-review-block' ) );
 
     return;
 }
