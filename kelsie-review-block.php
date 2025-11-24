@@ -243,7 +243,7 @@ final class KelsieReviewBlock {
 
 
 	/* -----------------------------------------------------------
-	 *  SCHEMA PREVIEW (Option A)
+	 *  SCHEMA PREVIEW
 	 * ----------------------------------------------------------- */
 
 	public function add_schema_metabox() {
