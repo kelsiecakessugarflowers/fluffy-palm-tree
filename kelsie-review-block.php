@@ -150,6 +150,12 @@ final class KelsieReviewBlock {
             return; // ACF inactive.
         }
 
+        $should_register = apply_filters( 'kelsie_review_block_register_field_group', true );
+
+        if ( ! $should_register ) {
+            return; // Site owner disabled the built-in repeater.
+        }
+
         acf_add_local_field_group(
             [
                 'key'      => 'group_kelsie_review_list',
