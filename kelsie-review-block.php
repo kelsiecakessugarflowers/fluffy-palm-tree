@@ -197,8 +197,8 @@ final class KelsieReviewBlock {
 					continue;
 				}
 
-				$data = $block['attrs']['data'] ?? [];
-				$rows = $this->normalize_repeater_rows( $data );
+                                $data = $block['attrs']['data'] ?? [];
+                                $rows = self::normalize_repeater_rows( $data );
 				if ( empty( $rows ) )
 					continue;
 
@@ -223,7 +223,7 @@ final class KelsieReviewBlock {
 		return $found;
 	}
 
-	private function normalize_repeater_rows( $data ) {
+    public static function normalize_repeater_rows( $data ) {
 		$rows = [];
 
 		if ( isset( $data['client_testimonials'] ) &&
