@@ -3,12 +3,12 @@
  * Plugin Name: Kelsie Review Block
  * Description: Custom testimonial block using ACF repeater fields + automatic Review Schema via Rank Math.
  * Author: It Me
- * Version: 3.0.0
+ * Version: 3.0.1
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'KELSIE_REVIEW_BLOCK_VERSION', '3.0.0' );
+define( 'KELSIE_REVIEW_BLOCK_VERSION', '3.0.1' );
 
 /* -----------------------------------------------------------
  *  BRAND DESIGN CONSTANTS
@@ -50,12 +50,17 @@ final class KelsieReviewBlock {
 
     private $allowed_pages = [ 11336 ];
     private $block_registered = false;
+    private $styles_registered = false;
 
     public static function init() {
         $instance = new self();
 
         // Register block through ACF, not core.
         add_action( 'acf/init', [ $instance, 'register_acf_block' ] );
+
+        // Enqueue assets selectively.
+        add_action( 'enqueue_block_assets', [ $instance, 'enqueue_frontend_assets' ] );
+        add_action( 'enqueue_block_editor_assets', [ $instance, 'enqueue_editor_assets' ] );
 
         // Schema output.
         add_filter( 'rank_math/json_ld', [ $instance, 'inject_schema' ], 10, 2 );
@@ -78,6 +83,37 @@ final class KelsieReviewBlock {
         }
 
         $this->block_registered = true;
+
+        $this->register_styles();
+
+        // ACF block registration.
+        acf_register_block_type([
+            'name'            => 'kelsiecakes-review-list',
+            'title'           => __('Review List', 'kelsie'),
+            'description'     => __('Dynamic testimonial list using ACF repeater + Review Schema.', 'kelsie'),
+            'mode'            => 'preview',
+            'render_callback' => [ $this, 'render_block' ],
+            'category'        => 'widgets',
+            'supports'        => [
+                'align' => true,
+            ],
+        ]);
+    }
+
+    public function render_block( $block, $content = '', $is_preview = false, $post_id = 0 ) {
+        ob_start();
+        include plugin_dir_path(__FILE__) . 'render.php';
+        return ob_get_clean();
+    }
+
+    /* -----------------------------------------------------------
+     *  ASSET REGISTRATION & LOADING
+     * ----------------------------------------------------------- */
+
+    private function register_styles() {
+        if ( $this->styles_registered ) {
+            return;
+        }
 
         $plugin_url = plugin_dir_url( __FILE__ );
         $plugin_dir = plugin_dir_path( __FILE__ );
@@ -103,24 +139,36 @@ final class KelsieReviewBlock {
             wp_add_inline_style( 'kelsie-review-block', $brand_styles );
         }
 
-        // ACF block registration.
-        acf_register_block_type([
-            'name'            => 'kelsiecakes-review-list',
-            'title'           => __('Review List', 'kelsie'),
-            'description'     => __('Dynamic testimonial list using ACF repeater + Review Schema.', 'kelsie'),
-            'mode'            => 'preview',
-            'render_callback' => [ $this, 'render_block' ],
-            'category'        => 'widgets',
-            'supports'        => [
-                'align' => true,
-            ],
-        ]);
+        $this->styles_registered = true;
     }
 
-    public function render_block( $block, $content = '', $is_preview = false, $post_id = 0 ) {
-        ob_start();
-        include plugin_dir_path(__FILE__) . 'render.php';
-        return ob_get_clean();
+    public function enqueue_frontend_assets() {
+        if ( is_admin() ) {
+            return;
+        }
+
+        if ( ! $this->should_handle_request() ) {
+            return;
+        }
+
+        $this->register_styles();
+
+        wp_enqueue_style( 'kelsie-review-block' );
+    }
+
+    public function enqueue_editor_assets() {
+        if ( ! is_admin() ) {
+            return;
+        }
+
+        if ( ! $this->should_handle_request() ) {
+            return;
+        }
+
+        $this->register_styles();
+
+        wp_enqueue_style( 'kelsie-review-block' );
+        wp_enqueue_style( 'kelsie-review-block-editor' );
     }
 
     /* -----------------------------------------------------------
