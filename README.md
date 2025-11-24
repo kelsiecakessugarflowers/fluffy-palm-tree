@@ -1,6 +1,6 @@
 # Fluffy Palm Tree Testimonials
 
-A lightweight testimonials plugin that registers a dedicated `testimonial` post type, optional Advanced Custom Fields (ACF) fields, and a shortcode for rendering reviews. Rank Math sitemaps stay enabled for the post type so the content remains indexable.
+A lightweight testimonials plugin that provides an ACF-powered review block and Rank Math schema output. Content is managed directly in the block (or via ACF fields) without any custom post types.
 
 ## Installation
 1. Copy this folder to `wp-content/plugins/fluffy-palm-tree` inside your WordPress installation.
@@ -8,12 +8,7 @@ A lightweight testimonials plugin that registers a dedicated `testimonial` post 
 3. (Optional) Activate ACF or ACF Pro to use the bundled reviewer name, role, and rating fields.
 
 ## Usage
-- Create testimonials under the new **Testimonials** menu in the WordPress admin.
-- Use the `[fluffy_testimonials]` shortcode in posts, pages, or template parts.
+- Add the **Review List** block to a page or template and fill in the testimonial fields.
+- Use the block's ACF repeater to manage multiple testimonials within the same block instance.
 
-Shortcode attributes:
-- `limit` (default `5`): maximum number of testimonials to display.
-- `order` (default `DESC`): `ASC` or `DESC` ordering by date.
-- `category`: filter by a testimonial category slug.
-
-The plugin also loads a simple front-end stylesheet (`assets/css/frontend.css`) and JavaScript hover effect (`assets/js/frontend.js`). Copy `templates/testimonials-loop.php` into your active theme at `fluffy-palm-tree/testimonials-loop.php` to override the markup.
+The plugin also loads front-end and editor styles for the block and injects an ItemList schema via Rank Math based on the testimonials entered into the block.
