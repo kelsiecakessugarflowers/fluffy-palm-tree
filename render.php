@@ -1,176 +1,267 @@
 <?php
+if (!defined('ABSPATH')) { exit; }
+
 /**
- * Frontend render template for the Kelsie Review Block.
+ * Kelsie FAQ Block — unified render
  *
- * This file assumes the block is registered through ACF and that
- * repeater data comes from ACF’s block data API ($block['data']).
+ * Requires ACF subfields (constants):
+ * - KELSIE_FAQ_REPEATER
+ * - KELSIE_FAQ_QUESTION
+ * - KELSIE_FAQ_ANSWER
+ * - KELSIE_FAQ_CATEGORY  (ACF taxonomy/select; can return terms, IDs, or strings)
+ * - KELSIE_OPTIONS_ID    (Options page ID for fallback)
+ *
+ * Optional ACF fields on the block or page:
+ * - include_categories   (array of terms/IDs/slugs)
+ * - exclude_categories   (array of terms/IDs/slugs)
+ * - faq_categories_to_show (page-level fallback include list)
  */
 
-// Bail if no block context exists.
-if ( ! isset( $block ) || ! is_array( $block ) ) {
-    return;
-}
+function kelsie_render_faq_block( $block, $content = '', $is_preview = false ) {
 
-$block_name = $block['name'] ?? '';
-$valid_names = [ 'kelsiecakes/review-list', 'acf/kelsiecakes-review-list' ];
-
-// Only render for the right block.
-if ( ! in_array( $block_name, $valid_names, true ) ) {
-    return;
-}
-
-// Detect if ACF functions are present.
-$acf_available = function_exists( 'acf' ) && function_exists( 'have_rows' );
-$is_editor     = is_admin();
-
-// Determine section ID (anchor > id > fallback).
-$section_id = '';
-
-if ( ! empty( $block['anchor'] ) ) {
-    $section_id = sanitize_title( $block['anchor'] );
-} elseif ( ! empty( $block['id'] ) ) {
-    $section_id = sanitize_title( $block['id'] );
-}
-
-if ( '' === $section_id ) {
-    $section_id = 'kelsie-review-list';
-}
-
-// Placeholder function for empty or missing ACF.
-$render_placeholder = static function( $message ) use ( $section_id ) {
-    ?>
-    <section id="<?php echo esc_attr( $section_id ); ?>"
-        class="kelsie-review-block se-wpt"
-        aria-label="<?php esc_attr_e( 'Client testimonials', 'kelsie-review-block' ); ?>">
-
-        <div class="kelsie-review-block__list" role="list">
-            <article class="kelsie-review-block__item" role="listitem">
-                <p class="kelsie-review-block__notice">
-                    <?php echo esc_html( $message ); ?>
-                </p>
-            </article>
-        </div>
-    </section>
-    <?php
-};
-
-// Collect repeater rows from available sources.
-$normalized_rows = [];
-
-if ( $acf_available && function_exists( 'get_field' ) ) {
-    $acf_rows = get_field( 'client_testimonials' );
-
-    if ( method_exists( 'KelsieReviewBlock', 'normalize_repeater_rows' ) ) {
-        $normalized_rows = KelsieReviewBlock::normalize_repeater_rows(
-            [ 'client_testimonials' => $acf_rows ]
-        );
+    // 0) Guard: ACF inactive
+    if ( ! function_exists('get_field') ) {
+        if ( ! empty($is_preview) ) {
+            echo '<div class="kelsie-faq-list__empty"><em>ACF is inactive. Activate ACF to display FAQs.</em></div>';
+        }
+        return;
     }
-}
 
-if ( empty( $normalized_rows ) && $acf_available && have_rows( 'client_testimonials' ) ) {
-    // Fallback to the_row() cursor if direct field access fails.
-    $normalized_rows = [];
+    // 1) Wrapper attributes
+    $block_id   = 'faq-list-' . ( $block['id'] ?? uniqid() );
+    $anchor     = ! empty( $block['anchor'] ) ? $block['anchor'] : $block_id;
+    $class_name = 'kelsie-faq-list';
+    if ( ! empty( $block['className'] ) ) $class_name .= ' ' . $block['className'];
+    if ( ! empty( $block['align'] ) )     $class_name .= ' align' . $block['align'];
 
-    while ( have_rows( 'client_testimonials' ) ) {
+    // 2) Helper: normalize any category value(s) to ['slug','label']
+    $to_terms = function( $terms ) {
+        $out = [];
+        if (empty($terms)) return $out;
+
+        foreach ( (array) $terms as $term ) {
+            // a) Numeric ID
+            if ( is_numeric($term) ) {
+                $t = get_term( (int) $term ); // taxonomy optional; WP will resolve when unique
+                if ( $t && ! is_wp_error($t) ) {
+                    $out[] = [
+                        'slug'  => sanitize_title($t->slug),
+                        'label' => sanitize_text_field($t->name),
+                    ];
+                }
+                continue;
+            }
+            // b) WP_Term object
+            if ( is_object($term) && isset($term->term_id) ) {
+                $out[] = [
+                    'slug'  => sanitize_title($term->slug),
+                    'label' => sanitize_text_field($term->name ?? $term->slug),
+                ];
+                continue;
+            }
+            // c) String (slug/label)
+            if ( is_string($term) ) {
+                $slug  = sanitize_title($term);
+                $label = trim( wp_strip_all_tags($term) );
+                $out[] = [
+                    'slug'  => $slug,
+                    'label' => $label ?: $slug,
+                ];
+            }
+        }
+
+        // de-dupe by slug
+        $seen = [];
+        $uniq = [];
+        foreach ($out as $t) {
+            if (!isset($seen[$t['slug']])) {
+                $seen[$t['slug']] = true;
+                $uniq[] = $t;
+            }
+        }
+        return $uniq;
+    };
+
+    // 3) Choose source: post repeater first, fallback to options
+    $context_id = null;
+    $source     = null;
+
+    if ( have_rows( KELSIE_FAQ_REPEATER ) ) {
+        $context_id = get_the_ID();
+        $source     = 'post';
+    } elseif ( have_rows( KELSIE_FAQ_REPEATER, KELSIE_OPTIONS_ID ) ) {
+        $context_id = KELSIE_OPTIONS_ID;
+        $source     = 'option';
+    } else {
+        if ( ! empty($is_preview) ) {
+            echo '<div class="kelsie-faq-list__empty"><em>No FAQs found. Add rows on this post or in the Options Page.</em></div>';
+        }
+        return;
+    }
+
+    // 4) Optional include/exclude lists (block-level first, then page-level fallback for include)
+    $include_terms = get_field('include_categories');
+    $exclude_terms = get_field('exclude_categories');
+
+    if ( empty($include_terms) && empty($exclude_terms) ) {
+        $include_terms = get_field('faq_categories_to_show', get_the_ID());
+    }
+
+    $include      = $to_terms($include_terms);
+    $exclude      = $to_terms($exclude_terms);
+    $include_slugs = array_values( array_unique( array_map( fn($t) => $t['slug'], $include ) ) );
+    $exclude_slugs = array_values( array_unique( array_map( fn($t) => $t['slug'], $exclude ) ) );
+
+    // 5) Collect rows -> normalized items (and filter)
+    $items = [];
+    while ( have_rows( KELSIE_FAQ_REPEATER, $context_id ) ) {
         the_row();
 
-        $normalized_rows[] = [
-            'review_body'              => (string) get_sub_field( 'review_body' ),
-            'reviewer_name'            => (string) get_sub_field( 'reviewer_name' ),
-            'review_title'             => (string) get_sub_field( 'review_title' ),
-            'rating_number'            => get_sub_field( 'rating_number' ),
-            'review_id'                => (string) get_sub_field( 'review_id' ),
-            'review_original_location' => (string) get_sub_field( 'review_original_location' ),
+        $q_raw = get_sub_field( KELSIE_FAQ_QUESTION );
+        $a_raw = get_sub_field( KELSIE_FAQ_ANSWER );
+        $cats  = get_sub_field( KELSIE_FAQ_CATEGORY );  // may be term objects, IDs, strings, or arrays
+        $cats_n = $to_terms( $cats );
+
+        $cat_slugs = array_map( fn($t) => $t['slug'], $cats_n );
+
+        // include: must match at least one if provided
+        if ( ! empty($include_slugs) && empty( array_intersect($include_slugs, $cat_slugs) ) ) {
+            continue;
+        }
+        // exclude: must not match any
+        if ( ! empty($exclude_slugs) && ! empty( array_intersect($exclude_slugs, $cat_slugs) ) ) {
+            continue;
+        }
+
+        $items[] = [
+            'question' => is_string($q_raw) ? trim( wp_strip_all_tags($q_raw) ) : '',
+            'answer'   => is_string($a_raw) ? $a_raw : '',
+            'cats'     => $cats_n, // ['slug','label']
         ];
     }
 
-    // Normalize values (trim, validate, etc.).
-    if ( method_exists( 'KelsieReviewBlock', 'normalize_repeater_rows' ) ) {
-        $normalized_rows = KelsieReviewBlock::normalize_repeater_rows(
-            [ 'client_testimonials' => $normalized_rows ]
-        );
+    if ( empty($items) ) {
+        echo '<div class="kelsie-faq-list__empty"><em>No FAQs match the current filters.</em></div>';
+        return;
     }
-}
 
-if ( empty( $normalized_rows ) && isset( $block['data'] ) && is_array( $block['data'] ) ) {
-    if ( method_exists( 'KelsieReviewBlock', 'normalize_repeater_rows' ) ) {
-        $normalized_rows = KelsieReviewBlock::normalize_repeater_rows( $block['data'] );
+    // 6) Build unique cat list for the <select>
+    $all_cats = [];
+    foreach ($items as $it) {
+        foreach ($it['cats'] as $t) {
+            $all_cats[$t['slug']] = $t['label'];
+        }
     }
-}
+    ksort($all_cats, SORT_NATURAL | SORT_FLAG_CASE);
 
-// If absolutely no rows exist, show placeholder in editor; silence on frontend.
-if ( empty( $normalized_rows ) ) {
-    if ( $is_editor ) {
-        $render_placeholder( __( 'Add client testimonials to show this block.', 'kelsie-review-block' ) );
+    // Editor hint
+    if ( $is_preview ) {
+        echo '<div style="font:12px/1.4 system-ui;opacity:.75;margin-bottom:.5rem;">Rendering FAQs from <strong>'
+           . esc_html( $source === 'post' ? 'this post' : 'Options Page' )
+           . '</strong>.</div>';
     }
-    return;
-}
+    ?>
 
-?>
-<section id="<?php echo esc_attr( $section_id ); ?>"
-    class="kelsie-review-block se-wpt"
-    aria-label="<?php esc_attr_e( 'Client testimonials', 'kelsie-review-block' ); ?>">
+    <section id="<?php echo esc_attr($anchor); ?>" class="<?php echo esc_attr($class_name); ?>" itemscope itemtype="https://schema.org/FAQPage">
 
-    <div class="kelsie-review-block__list" role="list">
+        <!-- Toolbar: Category, Search, Count (local-only; no form/role to avoid 3rd-party search hijacks) -->
+        <div class="kelsie-faq-list__toolbar" aria-label="FAQ filters">
+            <label class="kelsie-faq-list__control">
+                <span class="kelsie-faq-list__control-label">Category</span>
+                <select class="kelsie-faq-list__filter" aria-controls="<?php echo esc_attr($anchor); ?>">
+                    <option value="">All</option>
+                    <?php foreach ($all_cats as $slug => $label): ?>
+                        <option value="<?php echo esc_attr($slug); ?>"><?php echo esc_html($label); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
 
-        <?php foreach ( $normalized_rows as $index => $row ) : ?>
+            <label class="kelsie-faq-list__control">
+                <span class="kelsie-faq-list__control-label">Search</span>
+                <input type="search"
+                    class="kelsie-faq-list__search"
+                    placeholder="Type to filter…"
+                    autocomplete="off"
+                    spellcheck="false"
+                    aria-controls="<?php echo esc_attr($anchor); ?>" />
+            </label>
+
+            <span class="kelsie-faq-list__count" aria-live="polite"></span>
+        </div>
+
+        <!-- Items -->
+        <div class="kelsie-faq-list__items" role="list">
             <?php
-            $body   = trim( (string) ( $row['review_body'] ?? '' ) );
-            $title  = trim( (string) ( $row['review_title'] ?? '' ) );
-            $name   = trim( (string) ( $row['reviewer_name'] ?? '' ) );
-            $rating = $row['rating_number'] ?? null;
+            $i = 0;
+            foreach ($items as $it):
+                $i++;
+                $q      = $it['question'] ?: 'Untitled question';
+                $a_html = wpautop( $it['answer'] );
+                $cat_attr = '';
+                $chips    = '';
 
-            if ( '' === $body || '' === $name ) {
-                continue;
-            }
+                if ( ! empty($it['cats']) ) {
+                    $slugs = array_map(fn($t) => $t['slug'], $it['cats']);
+                    $cat_attr = strtolower( implode('|', array_unique(array_map('sanitize_title', $slugs))) );
+                    foreach ($it['cats'] as $t) {
+                        $chips .= '<span class="kelsie-faq-list__chip">' . esc_html($t['label']) . '</span>';
+                    }
+                }
 
-            $rating_value = ( is_numeric( $rating ) && $rating > 0 )
-                ? max( 1, min( 5, (float) $rating ) )
-                : null;
-
-            $review_id   = trim( (string) ( $row['review_id'] ?? '' ) );
-            $row_index   = $index + 1;
-
-            $review_slug = $review_id !== ''
-                ? $review_id
-                : sanitize_title( $name . '-' . $row_index );
-
-            if ( '' === $review_slug ) {
-                $review_slug = uniqid( 'review-', false );
-            }
+                $panel_id   = esc_attr($anchor . '-item-' . $i);
+                $summary_id = esc_attr($panel_id . '-summary');
             ?>
-
-            <article class="kelsie-review-block__item"
-                id="<?php echo esc_attr( $review_slug ); ?>"
-                role="listitem">
-
-                <blockquote class="wp-block-pullquote is-style-solid-color">
-
-                    <?php if ( $title !== '' ) : ?>
-                        <p class="review-title"><strong><?php echo esc_html( $title ); ?></strong></p>
+            <details class="kelsie-faq-list__item"
+                     id="<?php echo $panel_id; ?>"
+                     role="listitem"
+                     data-cats="<?php echo esc_attr($cat_attr); ?>"
+                     itemscope
+                     itemprop="mainEntity"
+                     itemtype="https://schema.org/Question">
+                <summary id="<?php echo $summary_id; ?>" class="kelsie-faq-list__question" itemprop="name">
+                    <?php echo esc_html($q); ?>
+                </summary>
+                <div class="kelsie-faq-list__answer"
+                     itemscope
+                     itemprop="acceptedAnswer"
+                     itemtype="https://schema.org/Answer">
+                    <div class="kelsie-faq-list__answer-inner" itemprop="text">
+                        <?php echo wp_kses_post( $a_html ?: '<p>(No answer yet.)</p>' ); ?>
+                    </div>
+                    <?php if ($chips): ?>
+                        <div class="kelsie-faq-list__meta">
+                            <span class="kelsie-faq-list__label">Category:</span>
+                            <?php echo $chips; // escaped above ?>
+                        </div>
                     <?php endif; ?>
+                </div>
+            </details>
+            <?php endforeach; ?>
+        </div>
 
-                    <p><?php echo esc_html( $body ); ?></p>
+        <?php
+        // 7) JSON-LD (plain text only for safety)
+        $ld = [
+            '@context'    => 'https://schema.org',
+            '@type'       => 'FAQPage',
+            'mainEntity'  => array_values(array_map(function($it) {
+                return [
+                    '@type' => 'Question',
+                    'name'  => wp_strip_all_tags($it['question']),
+                    'acceptedAnswer' => [
+                        '@type' => 'Answer',
+                        'text'  => wp_strip_all_tags($it['answer']),
+                    ],
+                ];
+            }, $items)),
+        ];
+        ?>
+        <script type="application/ld+json"><?php echo wp_json_encode( $ld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG ); ?></script>
+    </section>
+    <?php
+}
 
-                    <cite>
-                        <span class="kelsie-review-block__name">
-                            <?php echo esc_html( $name ); ?>
-                        </span>
-
-                        <?php if ( $rating_value !== null ) : ?>
-                            <span class="kelsie-review-block__rating"
-                                aria-label="<?php echo esc_attr( sprintf( __( 'Rated %.1f out of 5', 'kelsie-review-block' ), $rating_value ) ); ?>">
-                                – <?php echo esc_html( number_format_i18n( $rating_value, 1 ) ); ?>/5
-                            </span>
-                        <?php endif; ?>
-                    </cite>
-
-                </blockquote>
-
-            </article>
-
-        <?php endforeach; ?>
-
-    </div>
-
-</section>
+// Important: ACF "Render Template" mode includes this file; if it’s included, call directly:
+if ( isset($block) ) {
+    kelsie_render_faq_block( $block, $content ?? '', $is_preview ?? false );
+}
